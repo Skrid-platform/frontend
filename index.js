@@ -30,7 +30,6 @@ const upload = multer({ storage: storage });
 const uri = 'neo4j://localhost:7687'; // default dor cypher-shell neo4j://localhost:7687
 // cypher-shell -u neo4j -p root -a neo4j://localhost:7687
 const user = 'neo4j'
-// const password = '12345678';
 
 // Read passowrd for file
 var password;
@@ -503,7 +502,7 @@ app.post('/compileFuzzy', (req, res) => {
 });
 
 /**
- * This endpoint calls the python parser to make a fuzzy query from notes.
+ * This endpoint makes a fuzzy query from notes, filters and fuzzy parameters.
  *
  * Data to post :
  *     ```
@@ -526,91 +525,26 @@ app.post('/compileFuzzy', (req, res) => {
  *
  * @constant /formulateQuery
  */
-app.post('/formulateQuery', (req, res) => {
-    // Get the params
-    const notes = req.body.notes;
-    let pitch_distance = req.body.pitch_distance;
-    let duration_factor = req.body.duration_factor;
-    let duration_gap = req.body.duration_gap;
-    let alpha = req.body.alpha;
-    let allow_transposition = req.body.allow_transposition;
-    let allow_homothety = req.body.allow_homothety;
-    let incipit_only = req.body.incipit_only;
-    let contour_match = req.body.contour_match;
-    let collection = req.body.collection;
+app.post('/formulateQuery', async (req, res) => {
+    try {
+        const response = await fetch('http://localhost:5000/generate-query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(req.body)
+        });
 
-    // Set default values if some params are null
-    if (pitch_distance == null)
-        pitch_distance = 0;
-    if (duration_factor == null)
-        duration_factor = 1;
-    if (duration_gap == null)
-        duration_gap = 0;
-    if (alpha == null)
-        alpha = 0;
-    if (allow_transposition == null)
-        allow_transposition = false;
-    if (allow_homothety == null)
-        allow_homothety = false;
-    if (contour_match == null)
-        contour_match = false;
+        const data = await response.json();  // Receive { query: ... } or { error: ... }
 
-    // Create the connection
-    log('info', `/formulateQuery: openning connection.`);
-    const { spawn } = require('child_process');
-    let args = [
-        'compilation_requete_fuzzy/main_parser.py',
-        // '-U', uri, '-u', user, '-p', password, // write mode do not interract with the database
-        'write',
-        '-p', pitch_distance,
-        '-f', duration_factor,
-        '-g', duration_gap,
-        '-a', alpha,
-        notes
-    ];
-    if (allow_transposition)
-        args.push('-t');
+        if (!response.ok) {
+            return res.status(response.status).json({ error: data.error || 'Flask returned an error' });
+        }
 
-    if (allow_homothety)
-        args.push('-H');  
+        return res.json(data);  // Forward response to browser
 
-    if (incipit_only)
-    args.push('-io');
-
-    if (contour_match)
-        args.push('-C');
-
-    if (collection != null) {
-        args.push('-c');
-        args.push(collection);
+    } catch (error) {
+        console.error('/formulateQuery failed:', error);
+        return res.status(500).json({ error: 'Internal server error connecting to Flask API' });
     }
-    console.log(args);
-    let pyParserWrite = spawn('python3', args);
-
-    // Get the data
-    let allData = '';
-    pyParserWrite.stdout.on('data', data => {
-        log('info', `/formulateQuery: received data (${data.length} bytes) from python script.`);
-        allData += data.toString();
-    });
-    // log stderr
-    let errors = [];
-    pyParserWrite.stderr.on('data', data => {
-        let e = handlePythonStdErr('/formulateQuery', data);
-
-        if (e != null)
-            errors.push(e);
-    });
-
-    // Send the data to the client
-    pyParserWrite.stdout.on('close', () => {
-        log('info', `/formulateQuery: connection closed.`);
-
-        if (errors.length > 0)
-            return res.json({ error: errors.slice(-1)[0] });
-
-        return res.json({ query: allData });
-    });
 });
 
 
@@ -694,7 +628,7 @@ app.post('/createQueryFromAudio', upload.single('audio'), (req, res) => {
 });
 
 /**
- * This endpoint calls the python parser to send a fuzzy query and process the result of it.
+ * This endpoint sends a fuzzy query and process its results.
  *
  * Data to post : `{'query': some_fuzzy_query, 'format': f}`, where f is 'json' or 'text'.
  *
@@ -704,61 +638,40 @@ app.post('/createQueryFromAudio', upload.single('audio'), (req, res) => {
  *
  * @constant /queryFuzzy
  */
-app.post('/queryFuzzy', (req, res) => {
+app.post('/queryFuzzy', async (req, res) => {
     const query = req.body.query;
-    const format = req.body.format;
+    const format = req.body.format || 'json';
+    try {
+        // Prevent DB edits
+        if (queryEditsDB(query)) {
+            return res.json({ error: 'Operation not allowed.' });
+        }
+        log('info', `/queryFuzzy (format='${format}'): forwarding to Flask.`);
 
-    // Filtering keywords to avoid the user editing the database
-    if (queryEditsDB(query)) {
-        return res.json({ error: 'Operation not allowed.' });
-    }
-    else {
-        // Create the connection
-        log('info', `/queryFuzzy (format='${format}'): openning connection.`);
-        const { spawn } = require('child_process');
-
-        let args = [
-            'compilation_requete_fuzzy/main_parser.py',
-            '-U', uri, '-u', user, '-p', password,
-            'send',
-            '-f',
-            query
-        ];
-
-        if (format == 'json')
-            args.push('-j');
-        
-        let pyParserSend = spawn('python3', args);
-
-        // Get the data
-        let allData = '';
-        pyParserSend.stdout.on('data', data => {
-            log('info', `/queryFuzzy (format='${format}'): received data (${data.length} bytes) from python script.`);
-
-            allData += data.toString();
+        const response = await fetch('http://localhost:5000/execute-fuzzy-query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                query: query,
+                format: format,
+                uri: uri,
+                user: user,
+                password: password
+            })
         });
 
-        // log stderr
-        let errors = [];
-        pyParserSend.stderr.on('data', data => {
-            let e = handlePythonStdErr(`/queryFuzzy (format='${format}')`, data);
+        const data = await response.json();
 
-            if (e != null)
-                errors.push(e);
-        });
+        if (!response.ok || data.error) {
+            return res.status(400).json({ error: data.error || 'Flask returned an error' });
+        }
 
-        // Send the data to the client
-        pyParserSend.stdout.on('close', () => {
-            log('info', `/queryFuzzy (format='${format}'): connection closed.`);
+        // Format result like original logic
+        return res.json({ results: data.result || '[]' });
 
-            if (errors.length > 0)
-                return res.json({ error: errors.slice(-1)[0] });
-
-            else if (allData == '')
-                return res.json({ results: '[]'});
-
-            return res.json({ results: allData });
-        });
+    } catch (err) {
+        console.error(`/queryFuzzy (format='${format}'): error`, err);
+        return res.status(500).json({ error: 'Internal server error contacting Flask' });
     }
 });
 

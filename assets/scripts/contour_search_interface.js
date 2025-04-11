@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // TODO : add checking on melodicContour and rhythmicContour : both of same length, if one complitly empty fill with Xs
     const notes = `${melodicContour}-${rhythmicContour}`;
 
     // Write that a search is performing
