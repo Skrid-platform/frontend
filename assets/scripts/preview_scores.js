@@ -151,22 +151,21 @@ function extractMelodyFromQuery(query) {
 function getSourceAndCollection(result) {
     let res = {};
     try {
-        let prop = result._fields[0].properties;
-        res.source = prop.source;
-        res.collection = prop.collection;
-    }
-    catch {
-        try {
-            let prop = result.s.properties;
+        if (result.s && result.s.source && result.s.collection) {
+            const prop = result.s;
             res.source = prop.source;
             res.collection = prop.collection;
         }
-        catch {
-            res.source = result.name;
+        else {
+            console.warn("Strange structure in getSourceAndCollection");
+            res.source = null;
             res.collection = null;
         }
+    } catch (e) {
+        console.error("Error in getSourceAndCollection:", e);
+        res.source = null;
+        res.collection = null;
     }
-
     return res;
 }
 

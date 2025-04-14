@@ -243,7 +243,7 @@ function sendQuery(fuzzyQuery) {
     console.log('Sending query:\n', fuzzyQuery);
 
     // Send the query
-    fetch(`${BASE_PATH}/queryFuzzy`, {
+    fetch(`${BASE_PATH}/fuzzy-query`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
