@@ -21,15 +21,9 @@ document.addEventListener("DOMContentLoaded", init);
  * Returns a Promise that resolves when `tk` is initialized.
  */
 export async function ensureTkInitialized() {
-    // console.log('in ensureTkInitialized')
-    // If `tk` is already initialized, return a resolved promise
-    if (tk) {
-        // console.log("in if");
-    } else {
-        // console.log('in else')
+    if (!tk) {
         await verovio.module.onRuntimeInitialized;
         tk = new verovio.toolkit();
-        // console.log("Verovio toolkit initialized");
     }
 }
 
@@ -70,7 +64,7 @@ function getPageN(data, pageNb, numberPerPage) {
 /**
  * Refreshes the spin box max number and the total number of pages.
  *
- * @param {number} nb - the number of items in the collection for the current author (all pages included)
+ * @param {number} nb - the number of items in the collection for the current collection (all pages included)
  * @param {null} [current_page=null] - current page value to display in the spin box (if null, it is unchanged)
  * @param {null} [numberPerPage=null] - if not null, change the value of the displayed value of the nb per page select.
  */
@@ -240,20 +234,25 @@ async function dataToCSV(data) {
     for (let k = 0 ; k < data.length ; ++k) {
         let score = data[k];
 
-        // Get the collection (needs a fetch since it is not in the result)
-        await fetch(`${BASE_PATH}/findAuthor`, { // await is needed here to keep the order of the results
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({string: score.name})
-        })
-        .then(response => {
-            return response.json();
-        })
+    // Get the collection (needs a fetch since it is not in the result)
+    const query = "MATCH (s:Score {source: '" + source + "'}) RETURN s.collection as collection";
+    let data = {
+        "query": query,
+    };
+
+    await fetch(`${BASE_PATH}/crisp-query`, { // await is needed here to keep the order of the results
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        return response.json();
+    })
         .then(data_auth => {
-            let collection_name = data_auth.results[0]._fields[0]
-            csv_string += `\n${score.name},${collection_name},${score.number_of_occurrences}`;
+            let collection = data_auth.results[0].collection;
+            csv_string += `\n${score.name},${collection},${score.number_of_occurrences}`;
 
             if ('overall_degree' in data[0]) {
                 if ('overall_degree' in score)

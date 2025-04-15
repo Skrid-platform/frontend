@@ -378,42 +378,6 @@ app.get('/search', async function(req, res) {
 
 //============================= Endpoints (post) =============================//
 /**
- * This endpoint will retrieve the author of a specific music score.
- *
- * POST
- *
- * @constant /findAuthor
- */
-app.post('/findAuthor', async function(req, res) {
-    const score_name = req.body.string;
-
-    //const myQuery = "MATCH (s:Score {source: '" + score_name + "'}) RETURN s.composer";
-    const myQuery = "MATCH (s:Score {source: '" + score_name + "'}) RETURN s.collection";
-
-    // Filtering keywords to avoid the user editing the database
-    if (queryEditsDB(myQuery)) {
-        res.json({ error: 'Operation not allowed.' });
-    }
-    else {
-        log('info', `Performing query on /findAuthor: "${myQuery}"`);
-        const session = driver.session();
-        try {
-            await session.run(myQuery).then(result => {
-                const results = result.records;
-                res.json({ results: results});
-            });
-
-        } catch(error) {
-            log('error', `Error in the query: ${error}`);
-            res.sendStatus(500);
-
-        } finally {
-            await session.close();
-        }
-    }
-});
-
-/**
  * This endpoint sends the query to the database (if it does not modify the database) and send the result back to the client.
  *
  * POST
