@@ -487,7 +487,7 @@ async function createPreviews_2(results_container, results, pattern=null) {
             "query": query,
         };
 
-        await fetch(`${BASE_PATH}/crisp-query`, { // await is needed here to keep the order of the results
+        await fetch(`${BASE_PATH}/crisp-query-results`, { // await is needed here to keep the order of the results
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

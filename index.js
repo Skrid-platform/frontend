@@ -102,7 +102,7 @@ function queryEditsDB(query) {
 /**
  * Logs the error and return a string corresponding to the problem (string that will be shown to the client).
  *
- * @param {string} caller - the caller name (e.g '/formulateQuery'). Used for logs ;
+ * @param {string} caller - the caller name (e.g '/fuzzy-query'). Used for logs ;
  * @param {*} data - the error data.
  */
 function handlePythonStdErr(caller, data) {
@@ -226,9 +226,9 @@ app.get('/contourSearchInterface', async function (req, res) {
  *
  * GET
  *
- * @constant /formulateQueryFromMicrophone
+ * @constant /fuzzy-query-from-microphone
  */
-app.get('/formulateQueryFromMicrophone', async function (req, res) {
+app.get('/fuzzy-query-from-microphone', async function (req, res) {
     let authors = [];
 
     try {
@@ -240,7 +240,7 @@ app.get('/formulateQueryFromMicrophone', async function (req, res) {
             authors.push(record._fields[0]);
         });
     } catch(err) {
-        log('error', `/formulateQueryFromMicrophone: ${err}`)
+        log('error', `/fuzzy-query-from-microphone: ${err}`)
     }
 
     res.render("formulateQueryFromMicrophone", {
@@ -382,16 +382,16 @@ app.get('/search', async function(req, res) {
  *
  * POST
  *
- * @constant /crisp-query
+ * @constant /crisp-query-results
  */
-app.post('/crisp-query', (req, res) => {
+app.post('/crisp-query-results', (req, res) => {
     const query = req.body.query;
 
     if (queryEditsDB(query)) {
         return res.json({ error: 'Operation not allowed.' });
     }
 
-    log('info', `/crisp-query: forwarding query to Flask backend`);
+    log('info', `/crisp-query-results: forwarding query to Flask backend`);
 
     fetch('http://localhost:5000/execute-crisp-query', {
         method: 'POST',
@@ -411,7 +411,7 @@ app.post('/crisp-query', (req, res) => {
         return res.json({ results: data.results });
     })
     .catch(error => {
-        log('error', `/crisp-query: ${error.message}`);
+        log('error', `/crisp-query-results: ${error.message}`);
         return res.json({ error: error.message });
     });
 });
@@ -438,9 +438,9 @@ app.post('/crisp-query', (req, res) => {
  *
  * POST
  *
- * @constant /formulateQuery
+ * @constant /fuzzy-query
  */
-app.post('/formulateQuery', async (req, res) => {
+app.post('/fuzzy-query', async (req, res) => {
     try {
         const response = await fetch('http://localhost:5000/generate-query', {
             method: 'POST',
@@ -453,11 +453,11 @@ app.post('/formulateQuery', async (req, res) => {
         if (!response.ok) {
             return res.status(response.status).json({ error: data.error || 'Flask returned an error' });
         }
-
+        log('info', `/fuzzy-query: generated ${data.query}`);
         return res.json(data);  // Forward response to browser
 
     } catch (error) {
-        console.error('/formulateQuery failed:', error);
+        console.error('/fuzzy-query failed:', error);
         return res.status(500).json({ error: 'Internal server error connecting to Flask API' });
     }
 });
@@ -493,7 +493,7 @@ app.post('/createQueryFromAudio', upload.single('audio'), (req, res) => {
         contour_match = false;
 
     // Create the connection
-    log('info', `/formulateQuery: openning connection.`);
+    log('info', `/fuzzy-query: openning connection.`);
     const { spawn } = require('child_process');
     let args = [
         'compilation_requete_fuzzy/audio_parser.py',
@@ -518,14 +518,14 @@ app.post('/createQueryFromAudio', upload.single('audio'), (req, res) => {
     // Get the data
     let allData = '';
     pyParserWrite.stdout.on('data', data => {
-        log('info', `/formulateQuery: received data (${data.length} bytes) from python script.`);
+        log('info', `/fuzzy-query: received data (${data.length} bytes) from python script.`);
         allData += data.toString();
     });
 
     // log stderr
     let errors = [];
     pyParserWrite.stderr.on('data', data => {
-        let e = handlePythonStdErr('/formulateQuery', data);
+        let e = handlePythonStdErr('/fuzzy-query', data);
 
         if (e != null)
             errors.push(e);
@@ -533,7 +533,7 @@ app.post('/createQueryFromAudio', upload.single('audio'), (req, res) => {
 
     // Send the data to the client
     pyParserWrite.stdout.on('close', () => {
-        log('info', `/formulateQuery: connection closed.`);
+        log('info', `/fuzzy-query: connection closed.`);
 
         if (errors.length > 0)
             return res.json({ error: errors.slice(-1)[0] });
@@ -551,17 +551,17 @@ app.post('/createQueryFromAudio', upload.single('audio'), (req, res) => {
  *
  * POST
  *
- * @constant /fuzzy-query
+ * @constant /fuzzy-query-results
  */
-app.post('/fuzzy-query', async (req, res) => {
+app.post('/fuzzy-query-results', async (req, res) => {
     const query = req.body.query;
     try {
         // Prevent DB edits
         if (queryEditsDB(query)) {
-            log('info', `/fuzzy-query: Operation not allowed.`);
+            log('info', `/fuzzy-query-results: Operation not allowed.`);
             return res.json({ error: 'Operation not allowed.' });
         }
-        log('info', `/fuzzy-query: forwarding to Flask.`);
+        log('info', `/fuzzy-query-results: forwarding to Flask.`);
 
         const response = await fetch('http://localhost:5000/execute-fuzzy-query', {
             method: 'POST',
@@ -585,7 +585,7 @@ app.post('/fuzzy-query', async (req, res) => {
         return res.json({ results: data.result || '[]' });
 
     } catch (err) {
-        console.error(`/fuzzy-query: error`, err);
+        console.error(`/fuzzy-query-results: error`, err);
         return res.status(500).json({ error: 'Internal server error contacting Flask' });
     }
 });

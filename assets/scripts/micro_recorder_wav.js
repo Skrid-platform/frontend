@@ -127,9 +127,7 @@ export async function startRecording(duration = 4000) {
  * @param {string} fuzzyQuery - La query fuzzy à envoyer.
  */
 function sendQuery(fuzzyQuery) {
-  console.log('Sending query:\n', fuzzyQuery);
-
-  fetch(`${BASE_PATH}/fuzzy-query`, {
+  fetch(`${BASE_PATH}/fuzzy-query-results`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: fuzzyQuery, format: 'json' })
