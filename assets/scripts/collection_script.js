@@ -91,7 +91,7 @@ function fetchPageData(author) {
         "query": query,
     };
 
-    return fetch(`${BASE_PATH}/query`, {
+    return fetch(`${BASE_PATH}/crisp-query-results`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

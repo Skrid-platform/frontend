@@ -102,7 +102,7 @@ function queryEditsDB(query) {
 /**
  * Logs the error and return a string corresponding to the problem (string that will be shown to the client).
  *
- * @param {string} caller - the caller name (e.g '/formulateQuery'). Used for logs ;
+ * @param {string} caller - the caller name (e.g '/fuzzy-query'). Used for logs ;
  * @param {*} data - the error data.
  */
 function handlePythonStdErr(caller, data) {
@@ -166,16 +166,6 @@ app.get("/references", function (req, res) {
     res.render("references");
 });
 
-/**
- * Route for the manual query page.
- *
- * GET
- *
- * @constant /manualQuery
- */
-app.get("/manualQuery", function (req, res) {
-    res.render("manual_query");
-});
 
 /**
  * Route for the research page with the piano interface.
@@ -236,9 +226,9 @@ app.get('/contourSearchInterface', async function (req, res) {
  *
  * GET
  *
- * @constant /formulateQueryFromMicrophone
+ * @constant /fuzzy-query-from-microphone
  */
-app.get('/formulateQueryFromMicrophone', async function (req, res) {
+app.get('/fuzzy-query-from-microphone', async function (req, res) {
     let authors = [];
 
     try {
@@ -250,7 +240,7 @@ app.get('/formulateQueryFromMicrophone', async function (req, res) {
             authors.push(record._fields[0]);
         });
     } catch(err) {
-        log('error', `/formulateQueryFromMicrophone: ${err}`)
+        log('error', `/fuzzy-query-from-microphone: ${err}`)
     }
 
     res.render("formulateQueryFromMicrophone", {
@@ -388,116 +378,41 @@ app.get('/search', async function(req, res) {
 
 //============================= Endpoints (post) =============================//
 /**
- * This endpoint will retrieve the author of a specific music score.
- *
- * POST
- *
- * @constant /findAuthor
- */
-app.post('/findAuthor', async function(req, res) {
-    const score_name = req.body.string;
-
-    //const myQuery = "MATCH (s:Score {source: '" + score_name + "'}) RETURN s.composer";
-    const myQuery = "MATCH (s:Score {source: '" + score_name + "'}) RETURN s.collection";
-
-    // Filtering keywords to avoid the user editing the database
-    if (queryEditsDB(myQuery)) {
-        res.json({ error: 'Operation not allowed.' });
-    }
-    else {
-        log('info', `Performing query on /findAuthor: "${myQuery}"`);
-        const session = driver.session();
-        try {
-            await session.run(myQuery).then(result => {
-                const results = result.records;
-                res.json({ results: results});
-            });
-
-        } catch(error) {
-            log('error', `Error in the query: ${error}`);
-            res.sendStatus(500);
-
-        } finally {
-            await session.close();
-        }
-    }
-});
-
-/**
  * This endpoint sends the query to the database (if it does not modify the database) and send the result back to the client.
  *
  * POST
  *
- * @constant /query
+ * @constant /crisp-query-results
  */
-app.post('/query', (req, res) => {
-    // Retrieve the melody from the body
+app.post('/crisp-query-results', (req, res) => {
     const query = req.body.query;
 
-    // Filtering keywords to avoid the user editing the database
     if (queryEditsDB(query)) {
-        res.json({ error: 'Operation not allowed.' });
+        return res.json({ error: 'Operation not allowed.' });
     }
-    else {
-        // Execute the query
-        log('info', `Performing query on /query: "${query}"`);
-        const session = driver.session();
-        session.run(query)
-            .then(result => {
-                const results = result.records.map(record => record.toObject());
-                // Give back the results containing the melody
-                res.json({ results });
-            })
-            .catch(error => {
-                log('error', `/query: ${error.message}`)
-                res.json({ error: error.message });
-            });
-    }
-});
 
-/**
- * This endpoint calls the python parser to convert a fuzzy query to a cypher one.
- *
- * Data to post : `{'query': some_fuzzy_query}`
- *
- * POST
- *
- * @constant /compileFuzzy
- */
-app.post('/compileFuzzy', (req, res) => {
-    const query = req.body.query;
+    log('info', `/crisp-query-results: forwarding query to Flask backend`);
 
-    log('info', '/compileFuzzy: openning connection.')
-    const { spawn } = require('child_process');
-    const pyParserCompile = spawn('python3', ['compilation_requete_fuzzy/main_parser.py', 'compile', query]);
+    fetch('http://localhost:5000/execute-crisp-query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            query: query,
+            uri: uri,
+            user: user,
+            password: password
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error)
+            return res.json({ error: data.error });
 
-    // Get the data
-    let allData = '';
-    pyParserCompile.stdout.on('data', data => {
-        log('info', `/compileFuzzy: received data (${data.length} bytes) from python script.`);
-        allData += data.toString();
-    });
-
-    // log stderr
-    let errors = [];
-    pyParserCompile.stderr.on('data', data => {
-        let e = handlePythonStdErr('/formulateQuery', data);
-
-        if (e != null)
-            errors.push(e);
-    });
-
-    // Send the data to the client
-    pyParserCompile.stdout.on('close', () => {
-        log('info', '/compileFuzzy: Connection closed.');
-
-        if (errors.length > 0)
-            return res.json({ error: errors.slice(-1)[0] });
-
-        else if (allData == '')
-            return res.json({ results: '[]'});
-
-        return res.json({ results: allData });
+        return res.json({ results: data.results });
+    })
+    .catch(error => {
+        log('error', `/crisp-query-results: ${error.message}`);
+        return res.json({ error: error.message });
     });
 });
 
@@ -523,9 +438,9 @@ app.post('/compileFuzzy', (req, res) => {
  *
  * POST
  *
- * @constant /formulateQuery
+ * @constant /fuzzy-query
  */
-app.post('/formulateQuery', async (req, res) => {
+app.post('/fuzzy-query', async (req, res) => {
     try {
         const response = await fetch('http://localhost:5000/generate-query', {
             method: 'POST',
@@ -538,11 +453,11 @@ app.post('/formulateQuery', async (req, res) => {
         if (!response.ok) {
             return res.status(response.status).json({ error: data.error || 'Flask returned an error' });
         }
-
+        log('info', `/fuzzy-query: generated ${data.query}`);
         return res.json(data);  // Forward response to browser
 
     } catch (error) {
-        console.error('/formulateQuery failed:', error);
+        console.error('/fuzzy-query failed:', error);
         return res.status(500).json({ error: 'Internal server error connecting to Flask API' });
     }
 });
@@ -578,7 +493,7 @@ app.post('/createQueryFromAudio', upload.single('audio'), (req, res) => {
         contour_match = false;
 
     // Create the connection
-    log('info', `/formulateQuery: openning connection.`);
+    log('info', `/fuzzy-query: openning connection.`);
     const { spawn } = require('child_process');
     let args = [
         'compilation_requete_fuzzy/audio_parser.py',
@@ -603,14 +518,14 @@ app.post('/createQueryFromAudio', upload.single('audio'), (req, res) => {
     // Get the data
     let allData = '';
     pyParserWrite.stdout.on('data', data => {
-        log('info', `/formulateQuery: received data (${data.length} bytes) from python script.`);
+        log('info', `/fuzzy-query: received data (${data.length} bytes) from python script.`);
         allData += data.toString();
     });
 
     // log stderr
     let errors = [];
     pyParserWrite.stderr.on('data', data => {
-        let e = handlePythonStdErr('/formulateQuery', data);
+        let e = handlePythonStdErr('/fuzzy-query', data);
 
         if (e != null)
             errors.push(e);
@@ -618,7 +533,7 @@ app.post('/createQueryFromAudio', upload.single('audio'), (req, res) => {
 
     // Send the data to the client
     pyParserWrite.stdout.on('close', () => {
-        log('info', `/formulateQuery: connection closed.`);
+        log('info', `/fuzzy-query: connection closed.`);
 
         if (errors.length > 0)
             return res.json({ error: errors.slice(-1)[0] });
@@ -636,24 +551,24 @@ app.post('/createQueryFromAudio', upload.single('audio'), (req, res) => {
  *
  * POST
  *
- * @constant /queryFuzzy
+ * @constant /fuzzy-query-results
  */
-app.post('/queryFuzzy', async (req, res) => {
+app.post('/fuzzy-query-results', async (req, res) => {
     const query = req.body.query;
-    const format = req.body.format || 'json';
     try {
         // Prevent DB edits
         if (queryEditsDB(query)) {
+            log('info', `/fuzzy-query-results: Operation not allowed.`);
             return res.json({ error: 'Operation not allowed.' });
         }
-        log('info', `/queryFuzzy (format='${format}'): forwarding to Flask.`);
+        log('info', `/fuzzy-query-results: forwarding to Flask.`);
 
         const response = await fetch('http://localhost:5000/execute-fuzzy-query', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 query: query,
-                format: format,
+                format: 'json',
                 uri: uri,
                 user: user,
                 password: password
@@ -670,7 +585,7 @@ app.post('/queryFuzzy', async (req, res) => {
         return res.json({ results: data.result || '[]' });
 
     } catch (err) {
-        console.error(`/queryFuzzy (format='${format}'): error`, err);
+        console.error(`/fuzzy-query-results: error`, err);
         return res.status(500).json({ error: 'Internal server error contacting Flask' });
     }
 });

@@ -151,22 +151,21 @@ function extractMelodyFromQuery(query) {
 function getSourceAndCollection(result) {
     let res = {};
     try {
-        let prop = result._fields[0].properties;
-        res.source = prop.source;
-        res.collection = prop.collection;
-    }
-    catch {
-        try {
-            let prop = result.s.properties;
+        if (result.s && result.s.source && result.s.collection) {
+            const prop = result.s;
             res.source = prop.source;
             res.collection = prop.collection;
         }
-        catch {
-            res.source = result.name;
+        else {
+            console.warn("Strange structure in getSourceAndCollection");
+            res.source = null;
             res.collection = null;
         }
+    } catch (e) {
+        console.error("Error in getSourceAndCollection:", e);
+        res.source = null;
+        res.collection = null;
     }
-
     return res;
 }
 
@@ -483,19 +482,23 @@ async function createPreviews_2(results_container, results, pattern=null) {
             notes_id = result.notes_id;
 
         // Get the author (needs a fetch since it is not in the result)
-        let author_data = { string: source };
-        await fetch(`${BASE_PATH}/findAuthor`, { // await is needed here to keep the order of the results
+        const query = "MATCH (s:Score {source: '" + source + "'}) RETURN s.collection as collection";
+        let data = {
+            "query": query,
+        };
+
+        await fetch(`${BASE_PATH}/crisp-query-results`, { // await is needed here to keep the order of the results
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(author_data)
+            body: JSON.stringify(data)
         })
         .then(response => {
             return response.json();
         })
         .then(data_auth => {
-            let collection = data_auth.results[0]._fields[0]
+            let collection = data_auth.results[0].collection;
             let url = makeUrl(collection, source, pattern, result.matches);
             results_container.append(createPreview(url, source, result.number_of_occurrences, result.overall_degree));
 

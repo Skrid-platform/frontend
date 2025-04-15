@@ -42,9 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function sendQuery(fuzzyQuery) {
-  console.log('Sending query:', fuzzyQuery);
-
-  fetch(`${BASE_PATH}/queryFuzzy`, {
+  fetch(`${BASE_PATH}/fuzzy-query-results`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -87,7 +85,7 @@ async function createQuery(contour, selectedCollection, incipit_only=false) {
       collection: selectedCollection
   };
 
-  return fetch(`${BASE_PATH}/formulateQuery`, {
+  return fetch(`${BASE_PATH}/fuzzy-query`, {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'
