@@ -561,7 +561,7 @@ app.post('/fuzzy-query-results', async (req, res) => {
             log('info', `/fuzzy-query-results: Operation not allowed.`);
             return res.json({ error: 'Operation not allowed.' });
         }
-        log('info', `/fuzzy-query-results: forwarding to Flask.`);
+        log('info', `/fuzzy-query-results: forwarding fuzzy query to Flask backend.`);
 
         const response = await fetch('http://localhost:5000/execute-fuzzy-query', {
             method: 'POST',
