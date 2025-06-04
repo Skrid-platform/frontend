@@ -100,6 +100,15 @@ function init() {
         document.getElementById("notation").innerHTML = ""; // if the last SVG is load
         document.getElementById("notation").innerHTML = svg;
 
+        
+        for (const match of matches) {
+            for (const note of match) {
+                console.log(`note = ${note}`)
+                if (!document.getElementById(note.id)) {
+                    console.warn(`❗ Note id ${note.id} not found in SVG`);
+                }
+            }
+        }
 
         setRightInfos(author, folder);
 

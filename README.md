@@ -1,4 +1,4 @@
-# SKRIDPlatform (Frontend)
+# 🎼 SKRID (frontend)
 
 SKRID Platform is a web-based interface for querying and exploring musical patterns stored in a graph database. This repository contains only the **frontend** of the platform.
 
@@ -43,7 +43,7 @@ The **backend** (query compilation, result processing, etc.) is maintained in a 
 
 ### 1. Clone the repository
 ```bash
-git clone https://gitlab.inria.fr/test-for-skrid/frontend.git
+git clone https://gitlab.inria.fr/skrid/frontend.git
 cd frontend
 ```
 
@@ -88,6 +88,8 @@ For database setup and ingestion scripts, see the backend project.
 
 ## 🖊️ Roadmap, Known Bugs & Tasks
 See [TODO.md](TODO.md) for planned features and known issues.
+
+---
 
 ## License
 
