@@ -5,7 +5,6 @@
 
 //============================= Init =============================//
 const express = require('express');
-const neo4j = require('neo4j-driver');
 const bodyParser = require('body-parser');
 
 const multer  = require('multer');
@@ -13,6 +12,8 @@ const { spawn } = require('child_process');
 
 const app = express();
 const port = 3000;
+
+const API_BASE_URL = 'http://localhost:5000';
 
 // Configuration de Multer pour stocker temporairement les fichiers audio dans le dossier 'uploads'
 const storage = multer.diskStorage({
@@ -25,28 +26,6 @@ const storage = multer.diskStorage({
     }
   });
 const upload = multer({ storage: storage });
-
-
-const uri = 'neo4j://localhost:7687'; // default dor cypher-shell neo4j://localhost:7687
-// cypher-shell -u neo4j -p root -a neo4j://localhost:7687
-const user = 'neo4j'
-
-// Read passowrd for file
-var password;
-const fs = require('fs');
-const { data } = require('jquery');
-try {
-    log('info', 'Reading password from file (`.database_password`) ...');
-    password = fs.readFileSync('.database_password', 'utf8');
-    password = password.replace('\n', '');
-    log('info', 'Password has been read.');
-} catch (err) {
-    password = '12345678';
-    log('warn', `Error when reading password from file: ${err}\nUsing default password (12345678) instead.`);
-}
-
-const driver = neo4j.driver(uri, neo4j.auth.basic(user, password)); 
-const session = driver.session();
 
 //setting view engine to ejs
 app.set("view engine", "ejs");
@@ -122,6 +101,25 @@ function handlePythonStdErr(caller, data) {
     }
 }
 
+async function queryDB(query) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/execute-crisp-query`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query })
+        });
+
+        const data = await response.json();
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        return data.results;
+    } catch (err) {
+        console.error('[queryDB] Error:', err.message);
+        throw err;
+    }
+}
+
 //============================= Images =============================//
 app.use(express.static('assets/public/')); // Everything in this folder will be available through the web
 
@@ -180,11 +178,8 @@ app.get('/searchInterface', async function (req, res) {
     try {
         // The query to get the authors is necessary to display the list of possible collections
         const authorQuery = "MATCH (s:Score) RETURN DISTINCT s.collection";
-        let temp2 = await session.run(authorQuery);
-        temp2 = temp2.records;
-        temp2.forEach((record) => {
-            authors.push(record._fields[0]);
-        });
+        const results = await queryDB(authorQuery);
+        authors = results.map(record => record['s.collection']);
     } catch(err) {
         log('error', `/searchInterface: ${err}`)
     }
@@ -207,11 +202,8 @@ app.get('/contourSearchInterface', async function (req, res) {
     try {
         // The query to get the authors is necessary to display the list of possible collections
         const authorQuery = "MATCH (s:Score) RETURN DISTINCT s.collection";
-        let temp2 = await session.run(authorQuery);
-        temp2 = temp2.records;
-        temp2.forEach((record) => {
-            authors.push(record._fields[0]);
-        });
+        const results = await queryDB(authorQuery);
+        authors = results.map(record => record['s.collection']);
     } catch(err) {
         log('error', `/contourSearchInterface: ${err}`)
     }
@@ -234,11 +226,8 @@ app.get('/fuzzy-query-from-microphone', async function (req, res) {
     try {
         // The query to get the authors is necessary to display the list of possible collections
         const authorQuery = "MATCH (s:Score) RETURN DISTINCT s.collection";
-        let temp2 = await session.run(authorQuery);
-        temp2 = temp2.records;
-        temp2.forEach((record) => {
-            authors.push(record._fields[0]);
-        });
+        const authorResponse = await queryDB(authorQuery);
+        authors = results.map(record => record['s.collection']);
     } catch(err) {
         log('error', `/fuzzy-query-from-microphone: ${err}`)
     }
@@ -268,37 +257,19 @@ app.get("/help", function (req, res) {
  * @constant /collections
  */
 app.get('/collections', async function (req, res) {
-    // let results = [];
     let authors = [];
 
-    const session = driver.session();
-
     try {
-        //---Get authors (to display the different collections)
-        //const authorQuery = "MATCH (s:Score) RETURN DISTINCT s.composer";
-        const authorQuery = "MATCH (s:Score) RETURN DISTINCT s.collection";
-        let temp2 = await session.run(authorQuery);
-        temp2 = temp2.records;
-        temp2.forEach((record) => {
-            //authors.push(record._fields[0].substring(13).slice(0,-6));
-            authors.push(record._fields[0]);
-        });
-
-        //---Get collection of the first author
-        // const name = authors[0];
-        // const myQuery = "MATCH (s:Score) WHERE s.collection CONTAINS $name RETURN s ORDER BY s.source LIMIT 1";
-        // let temp = await session.run(myQuery, {name: name});
-        // results = temp.records;
-
-    } catch(err) {
-        log('error', `/collections: ${err}`)
+        const results = await queryDB("MATCH (s:Score) RETURN DISTINCT s.collection");
+        authors = results.map(record => record['s.collection']);
+    } catch (err) {
+        log('error', `/collections: ${err.message}`);
     }
 
     res.render("collections", {
-        // results: results,
         authors: authors,
     });
-})
+});
 
 /**
  * Route for the result page.
@@ -321,13 +292,10 @@ app.get('/result', (req, res) => {
 app.get('/getCollectionByAuthor', async (req, res) => {
     let results = [];
     const name = req.query.author;
-    const session = driver.session();
 
     try {
-        //const myQuery = "MATCH (s:Score) WHERE s.composer CONTAINS $name RETURN s ORDER BY s.source";
         const myQuery = "MATCH (s:Score) WHERE s.collection CONTAINS $name RETURN s ORDER BY s.source";
-        let temp = await session.run(myQuery, {name: name});
-        results = temp.records;
+        authors = results.map(record => record['s']);
     } catch(err) {
         log('error', `/getCollectionByAuthor: ${err}`)
     }
@@ -348,26 +316,23 @@ app.get('/getCollectionByAuthor', async (req, res) => {
  * @constant /search
  * @todo this seems to be a duplicate of /searchInterface
  */
-app.get('/search', async function(req, res) {
-    const query = req.query.query;
+app.get('/search', async function (req, res) {
+    const searchTerm = req.query.query;
     let results = [];
     let authors = [];
 
     try {
-        const myQuery = "MATCH (s:Score) WHERE s.source CONTAINS $query RETURN s ORDER BY s.source DESC";
-        let temp = await session.run(myQuery, {query: query});
-        results = temp.records;
+        const resultQuery = "MATCH (s:Score) WHERE s.source CONTAINS $query RETURN s ORDER BY s.source DESC";
+        const resultParams = { query: searchTerm };
+        const resultResponse = await queryDB(resultQuery, resultParams);
+        results = resultResponse;
 
-        //const authorQuery = "MATCH (s:Score) RETURN DISTINCT s.composer";
         const authorQuery = "MATCH (s:Score) RETURN DISTINCT s.collection";
-        let temp2 = await session.run(authorQuery);
-        temp2 = temp2.records;
-        temp2.forEach((record) => {
-            //authors.push(record._fields[0].substring(13).slice(0,-6));
-            authors.push(record._fields[0]);
-        });
-    } catch(err) {
-        log('error', err);
+        const authorResponse = await queryDB(authorQuery);
+        authors = authorResponse.map(record => record.collection);
+
+    } catch (err) {
+        log('error', `/search: ${err.message}`);
     }
 
     res.render("search_interface", {
@@ -393,14 +358,11 @@ app.post('/crisp-query-results', (req, res) => {
 
     log('info', `/crisp-query-results: forwarding query to Flask backend`);
 
-    fetch('http://localhost:5000/execute-crisp-query', {
+    fetch(`${API_BASE_URL}/execute-crisp-query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            query: query,
-            uri: uri,
-            user: user,
-            password: password
+            query: query
         })
     })
     .then(response => response.json())
@@ -442,7 +404,7 @@ app.post('/crisp-query-results', (req, res) => {
  */
 app.post('/fuzzy-query', async (req, res) => {
     try {
-        const response = await fetch('http://localhost:5000/generate-query', {
+        const response = await fetch(`${API_BASE_URL}/generate-query`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(req.body)
@@ -502,7 +464,6 @@ app.post('/createQueryFromAudio', upload.single('audio'), (req, res) => {
         '-g', duration_gap,
         '-a', alpha,
     ];
-    console.log(args);
     if (allow_transposition)
         args.push('-t');
 
@@ -563,15 +524,12 @@ app.post('/fuzzy-query-results', async (req, res) => {
         }
         log('info', `/fuzzy-query-results: forwarding fuzzy query to Flask backend.`);
 
-        const response = await fetch('http://localhost:5000/execute-fuzzy-query', {
+        const response = await fetch(`${API_BASE_URL}/execute-fuzzy-query`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 query: query,
-                format: 'json',
-                uri: uri,
-                user: user,
-                password: password
+                format: 'json'
             })
         });
 
