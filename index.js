@@ -13,7 +13,8 @@ const { spawn } = require('child_process');
 const app = express();
 const port = 3000;
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:5000';
+const BASE_PATH = process.env.BASE_PATH || '';
 
 // Configuration de Multer pour stocker temporairement les fichiers audio dans le dossier 'uploads'
 const storage = multer.diskStorage({
@@ -36,9 +37,6 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use(express.static('data'));
 app.use('/data', express.static('data'));
-
-// préfixe global basé sur l'environnement (production ou développement)
-const BASE_PATH = process.env.BASE_PATH || ''; // '/skrid' en production, '' en local
 
 // Rendre le préfixe disponible dans tous les templates EJS
 app.use((req, res, next) => {
@@ -103,6 +101,7 @@ function handlePythonStdErr(caller, data) {
 
 async function queryDB(query) {
     try {
+        console.log(`${API_BASE_URL}/execute-crisp-query`);
         const response = await fetch(`${API_BASE_URL}/execute-crisp-query`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -124,18 +123,13 @@ async function queryDB(query) {
 app.use(express.static('assets/public/')); // Everything in this folder will be available through the web
 
 //============================= Pages (get) =============================//
-/**
- * Route for the home page.
- *
- * GET
- *
- * @constant /
- */
 
-// Définir une route pour le fichier config.js qui injecte le BASE_PATH
 app.get('/scripts/config.js', (req, res) => {
     res.set('Content-Type', 'application/javascript');
-    res.send(`const BASE_PATH = '${BASE_PATH}';`);
+    res.send(`
+        const BASE_PATH = '${BASE_PATH}';
+        const API_BASE_URL = '${API_BASE_URL}';
+    `);
 });
 
 app.get("/", function(req,res){
