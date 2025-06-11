@@ -85,10 +85,9 @@ function init() {
     // Get the author from the url and use it to find the folder in which the .mei file is contained
     score_name = readFromUrl('score_name');
     let author = readFromUrl('author').replace(/\s+/g, "-");
-    let folder = author + '/mei/';
 
     // Search for the .mei file in the folder
-    fetch(datadir + folder + score_name)
+    fetch(datadir + author + '/mei/' + score_name)
     .then( (response) => response.text() )
     .then( (meiXML) => {
         tk.loadData(meiXML);
@@ -110,7 +109,7 @@ function init() {
             }
         }
 
-        setRightInfos(author, folder);
+        setRightInfos(author);
 
         // Add gradient legend
         makeGradientLegend();
@@ -145,7 +144,7 @@ function readFromUrl(parameter) {
 /**
  * Set the informations from the file into the right box.
  */
-function setRightInfos(author, folder) {
+function setRightInfos(author) {
     // Set the author in the information box
     const author_p = document.getElementById('author');
     author_p.append(author);
@@ -168,42 +167,36 @@ function setRightInfos(author, folder) {
     const date = matchDate ? matchDate[0] : null;
 
     const composition_date = document.getElementById('composition_date');
-    composition_date.append(date);
+    // composition_date.append(date);
 
     document.getElementById('searchbar_title').append(score_name);
 
     var link_mei = document.createElement('a');
-    link_mei.setAttribute('href',datadir+folder+score_name);
+    link_mei.setAttribute('href',datadir+author+'/mei/'+score_name);
     link_mei.setAttribute('class', 'file-link');
     link_mei.innerHTML = score_name;
     document.getElementById('fichier_mei').appendChild(link_mei);
 
-    // var link_ly = document.createElement('a');
-    // link_ly.setAttribute('href',datadir+folder+filename+'.ly');
-    // link_ly.setAttribute('class', 'file-link');
-    // link_ly.innerHTML = filename+'.ly';
-    // document.getElementById('fichier_ly').appendChild(link_ly);
-
     var link_mid = document.createElement('a');
-    link_mid.setAttribute('href',datadir+folder+filename+'.mid');
+    link_mid.setAttribute('href',datadir+author+'/mid/'+filename+'.mid');
     link_mid.setAttribute('class', 'file-link');
     link_mid.innerHTML = filename+'.mid';
     document.getElementById('fichier_mid').appendChild(link_mid);
 
     var link_musicxml = document.createElement('a');
-    link_musicxml.setAttribute('href',datadir+folder+filename+'.musicxml');
+    link_musicxml.setAttribute('href',datadir+author+'/musicxml/'+filename+'.musicxml');
     link_musicxml.setAttribute('class', 'file-link');
     link_musicxml.innerHTML = filename+'.musicxml';
     document.getElementById('fichier_musicxml').appendChild(link_musicxml);
 
     var link_pdf = document.createElement('a');
-    link_pdf.setAttribute('href',datadir+folder+filename+'.pdf');
+    link_pdf.setAttribute('href',datadir+author+'/pdf/'+filename+'.pdf');
     link_pdf.setAttribute('class', 'file-link');
     link_pdf.innerHTML = filename+'.pdf';
     document.getElementById('fichier_pdf').appendChild(link_pdf);
 
     var link_svg = document.createElement('a');
-    link_svg.setAttribute('href',datadir+folder+filename+'.svg');
+    link_svg.setAttribute('href',datadir+author+'/svg/'+filename+'.svg');
     link_svg.setAttribute('class', 'file-link');
     link_svg.innerHTML = filename+'.svg';
     document.getElementById('fichier_svg').appendChild(link_svg);
@@ -584,10 +577,15 @@ function highlightMatch(match_nb) {
 const playMIDIHandler = function() {
     // Get the MIDI file from the Verovio toolkit
     let base64midi = tk.renderToMIDI();
+    
     // Add the data URL prefixes describing the content
     let midiString = 'data:audio/midi;base64,' + base64midi;
+    console.log(midiString)
     // Pass it to play to MIDIjs
     MIDIjs.play(midiString);
+    // let audio = new Audio(midiString);
+    // audio.play().catch(e => console.warn("Autoplay blocked", e));    
+
 }
 
 /**

@@ -101,7 +101,6 @@ function handlePythonStdErr(caller, data) {
 
 async function queryDB(query) {
     try {
-        console.log(`${API_BASE_URL}/execute-crisp-query`);
         const response = await fetch(`${API_BASE_URL}/execute-crisp-query`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
