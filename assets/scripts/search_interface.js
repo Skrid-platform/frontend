@@ -535,9 +535,14 @@ const matchRhythmCbHandler = () => {
     const rhythm_cb = document.getElementById('rhythm-cb');
     const duration_factor_select = document.getElementById('duration-factor-select');
     const duration_gap_select = document.getElementById('duration-gap-select');
+    const homothety_cb = document.getElementById('homothety-cb');
 
+    if (!rhythm_cb.checked){
+        homothety_cb.checked = false;
+    }
+    homothety_cb.disabled = !rhythm_cb.checked;
     duration_factor_select.disabled = !rhythm_cb.checked;
-    // duration_gap_select.disabled = !rhythm_cb.checked;
+    duration_gap_select.disabled = !rhythm_cb.checked;
 }
 
 /**

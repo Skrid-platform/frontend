@@ -3,9 +3,9 @@
 
 ## Bugs
 - accidental not considered on search (nor in data ingestion);
-- Result page: svg generated with verovio: comment overlap title (in the svg) ;
 - svg are generated for each result and so process can break when viewing individual result on result page ;
 - only melodic (no rythm) search is crashing when time homothety is selected ;
+    -> disabled homothety when no rythm ? 
 - cle du caveau -> highlight matching broken ;
 
 ## New features

@@ -716,7 +716,7 @@ function extractTitleAuthorComment(meiXML) {
         (comment ? `<p style="align-self: flex-start;"><b>Comment: </b>${comment}</p>` : "");
     notation.appendChild(scoreMetadataDiv);
     let SvgContainer = document.createElement('div');
-    SvgContainer.setAttribute('id', 'notation-svg-container'); 
+    SvgContainer.setAttribute('id', 'notation-svg-container');
     SvgContainer.style.height = notation.clientHeight - scoreMetadataDiv.clientHeight + 'px';
     notation.appendChild(SvgContainer);
 }
