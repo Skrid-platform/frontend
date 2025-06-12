@@ -25,6 +25,7 @@ async function initializeVerovio() {
 let datadir;
 let score_name;
 let note;
+let title_score_name;
 
 /** The search pattern (melody) (see {@linkcode makePattern} for more details) */
 let pattern = [];
@@ -50,7 +51,7 @@ function init() {
     document.getElementById("stopMIDI").addEventListener("click", stopMIDIHandler);
     document.getElementById("nextPage").addEventListener("click", nextPageHandler);
     document.getElementById("prevPage").addEventListener("click", prevPageHandler);
-    document.getElementById(`toggle-all-cb`).addEventListener('change', matchAllToggleHandler);
+    document.getElementById("toggle-all-cb").addEventListener("change", matchAllToggleHandler);
 
     // Set the function as message callback
     MIDIjs.player_callback = midiHightlightingHandler;
@@ -95,7 +96,6 @@ function init() {
 
             // remove the title, author and comment from the MEI file
             let newMEI = meiXML.replace(/<pgHead.*?<\/pgHead>/s, '');
-            console.log("MEI XML after removing pgHead: ", meiXML);
 
             tk.loadData(newMEI);
             // And generate the SVG for the first page ...
@@ -176,7 +176,7 @@ function setRightInfos(author) {
     const composition_date = document.getElementById('composition_date');
     // composition_date.append(date);
 
-    document.getElementById('searchbar_title').append(score_name);
+    document.getElementById('searchbar_title').append(title_score_name);
 
     var link_mei = document.createElement('a');
     link_mei.setAttribute('href', datadir + author + '/mei/' + score_name);
@@ -702,17 +702,17 @@ function extractTitleAuthorComment(meiXML) {
     const parentElement = xmlDoc.querySelectorAll('pgHead > rend');
 
     // extract title, author and comment
-    const title = parentElement[0] ? parentElement[0].textContent.trim() : 'Unknown Title';
+    title_score_name = parentElement[0] ? parentElement[0].textContent.trim() : 'Unknown Title';
     const author = parentElement[1] ? parentElement[1].textContent.trim() : 'Unknown Author';
-    const comment = parentElement[2] ? parentElement[2].textContent.trim() : 'No Comment';
+    const comment = parentElement[2] ? parentElement[2].textContent.trim() : '';
 
     let notation = document.getElementById('notation');
     // create a div to hold the title, author and comment
     let scoreMetadataDiv = document.createElement('div');
     scoreMetadataDiv.setAttribute('id', 'score-metadata');
-    scoreMetadataDiv.innerHTML = "<h2>" + title + "</h2>" +
+    scoreMetadataDiv.innerHTML = "<h2>" + title_score_name + "</h2>" +
         "<p><b>Author:</b> " + author + "</p>" +
-        "<p><b>Comment:</b> " + comment + "</p>";
+        (comment ? `<p style="align-self: flex-start;"><b>Comment: </b>${comment}</p>` : "");
     notation.appendChild(scoreMetadataDiv);
     let SvgContainer = document.createElement('div');
     SvgContainer.setAttribute('id', 'notation-svg-container'); 
