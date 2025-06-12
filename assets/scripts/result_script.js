@@ -45,30 +45,6 @@ function init() {
     datadir = "./data/";
     currentPage = 1;
 
-    const parent = document.getElementById('notation');
-
-    // Set the parameters for the correct visualization of the score
-    // let zoom = 75;
-    let zoom = 50;
-    const parentWidth = parent.offsetWidth;
-    const parentHeight = parent.offsetHeight;
-    let pageHeight = parentHeight * 100 / zoom;
-    let pageWidth = parentWidth * 100 / zoom;
-
-    // Use those parameters to set the options
-    let options = {
-        pageHeight: pageHeight,
-        pageWidth: pageWidth,
-        scale: zoom,
-        // adjustPageWidth: true,
-        // adjustPageHeight: true,
-        // scaleToPageSize: true,
-        // shrinkToFit: true,
-        font: 'Bravura',
-    };
-    tk.setOptions(options);
-
-
     // Wire up the buttons to actually work.
     document.getElementById("playMIDI").addEventListener("click", playMIDIHandler);
     document.getElementById("stopMIDI").addEventListener("click", stopMIDIHandler);
@@ -88,44 +64,75 @@ function init() {
 
     // Search for the .mei file in the folder
     fetch(datadir + author + '/mei/' + score_name)
-    .then( (response) => response.text() )
-    .then( (meiXML) => {
-        tk.loadData(meiXML);
-        // And generate the SVG for the first page ...
-        let svg = tk.renderToSVG(currentPage);
+        .then((response) => response.text())
+        .then((meiXML) => {
 
-        // Finally, get the <div> element with the specified ID, 
-        // and set the content (innerHTML) to the SVG that we just generated.
-        document.getElementById("notation").innerHTML = ""; // if the last SVG is load
-        document.getElementById("notation").innerHTML = svg;
+            // need to extract and remove the title, author and comment from the MEI file and put it over the svg
+            // if not done, the title, author and comment will overlap each other
+            extractTitleAuthorComment(meiXML);
 
-        
-        for (const match of matches) {
-            for (const note of match) {
-                console.log(`note = ${note}`)
-                if (!document.getElementById(note.id)) {
-                    console.warn(`❗ Note id ${note.id} not found in SVG`);
+            // Set the parameters for the correct visualization of the score
+            // let zoom = 75;
+            let zoom = 50;
+            const parentSvgContainer = document.getElementById('notation-svg-container');
+            const parentSvgWidth = parentSvgContainer.clientWidth;
+            const parentSvgHeight = parentSvgContainer.clientHeight;;
+            let pageHeight = parentSvgHeight * 100 / zoom;
+            let pageWidth = parentSvgWidth * 100 / zoom;
+
+            // Use those parameters to set the options
+            let options = {
+                pageHeight: pageHeight,
+                pageWidth: pageWidth,
+                scale: zoom,
+                // adjustPageWidth: true,
+                // adjustPageHeight: true,
+                // scaleToPageSize: true,
+                // shrinkToFit: true,
+                font: 'Bravura',
+            };
+            tk.setOptions(options);
+
+            // remove the title, author and comment from the MEI file
+            let newMEI = meiXML.replace(/<pgHead.*?<\/pgHead>/s, '');
+            console.log("MEI XML after removing pgHead: ", meiXML);
+
+            tk.loadData(newMEI);
+            // And generate the SVG for the first page ...
+            let svg = tk.renderToSVG(currentPage);
+
+            // Finally, get the <div> element with the specified ID, 
+            // and set the content (innerHTML) to the SVG that we just generated.
+            parentSvgContainer.innerHTML = ""; // if the last SVG is load
+            parentSvgContainer.innerHTML = svg;
+
+
+            for (const match of matches) {
+                for (const note of match) {
+                    console.log(`note = ${note}`)
+                    if (!document.getElementById(note.id)) {
+                        console.warn(`❗ Note id ${note.id} not found in SVG`);
+                    }
                 }
             }
-        }
 
-        setRightInfos(author);
+            setRightInfos(author);
 
-        // Add gradient legend
-        makeGradientLegend();
+            // Add gradient legend
+            makeGradientLegend();
 
-        // Add the match toggles
-        createMatchesHighlightToggles();
+            // Add the match toggles
+            createMatchesHighlightToggles();
 
-        // Color all matches
-        matchAllToggleHandler();
+            // Color all matches
+            matchAllToggleHandler();
 
-        // Add the hover infos
-        makePatternHoverBoxes();
+            // Add the hover infos
+            makePatternHoverBoxes();
 
-        // Disable buttons according to pagination
-        refreshPagination(currentPage, tk.getPageCount());
-    });
+            // Disable buttons according to pagination
+            refreshPagination(currentPage, tk.getPageCount());
+        });
 
 }
 
@@ -159,7 +166,7 @@ function setRightInfos(author) {
     const persNameElem = xmlDoc.getElementsByTagName('persName')[0];
     const persNameContent = persNameElem.textContent;
 
-    const filename = score_name.replace(/\.[^/.]+$/, "") 
+    const filename = score_name.replace(/\.[^/.]+$/, "")
 
     // Actually extract the date
     const regExpDate = /\d{4}/;
@@ -172,33 +179,33 @@ function setRightInfos(author) {
     document.getElementById('searchbar_title').append(score_name);
 
     var link_mei = document.createElement('a');
-    link_mei.setAttribute('href',datadir+author+'/mei/'+score_name);
+    link_mei.setAttribute('href', datadir + author + '/mei/' + score_name);
     link_mei.setAttribute('class', 'file-link');
     link_mei.innerHTML = score_name;
     document.getElementById('fichier_mei').appendChild(link_mei);
 
     var link_mid = document.createElement('a');
-    link_mid.setAttribute('href',datadir+author+'/mid/'+filename+'.mid');
+    link_mid.setAttribute('href', datadir + author + '/mid/' + filename + '.mid');
     link_mid.setAttribute('class', 'file-link');
-    link_mid.innerHTML = filename+'.mid';
+    link_mid.innerHTML = filename + '.mid';
     document.getElementById('fichier_mid').appendChild(link_mid);
 
     var link_musicxml = document.createElement('a');
-    link_musicxml.setAttribute('href',datadir+author+'/musicxml/'+filename+'.musicxml');
+    link_musicxml.setAttribute('href', datadir + author + '/musicxml/' + filename + '.musicxml');
     link_musicxml.setAttribute('class', 'file-link');
-    link_musicxml.innerHTML = filename+'.musicxml';
+    link_musicxml.innerHTML = filename + '.musicxml';
     document.getElementById('fichier_musicxml').appendChild(link_musicxml);
 
     var link_pdf = document.createElement('a');
-    link_pdf.setAttribute('href',datadir+author+'/pdf/'+filename+'.pdf');
+    link_pdf.setAttribute('href', datadir + author + '/pdf/' + filename + '.pdf');
     link_pdf.setAttribute('class', 'file-link');
-    link_pdf.innerHTML = filename+'.pdf';
+    link_pdf.innerHTML = filename + '.pdf';
     document.getElementById('fichier_pdf').appendChild(link_pdf);
 
     var link_svg = document.createElement('a');
-    link_svg.setAttribute('href',datadir+author+'/svg/'+filename+'.svg');
+    link_svg.setAttribute('href', datadir + author + '/svg/' + filename + '.svg');
     link_svg.setAttribute('class', 'file-link');
-    link_svg.innerHTML = filename+'.svg';
+    link_svg.innerHTML = filename + '.svg';
     document.getElementById('fichier_svg').appendChild(link_svg);
 }
 
@@ -211,7 +218,7 @@ function makeGradientLegend() {
     const grad_div = document.getElementById('gradient-legend');
 
     if (matches.length > 0) {
-        for (let k = 100 ; k >= 0 ; k -= 10) {
+        for (let k = 100; k >= 0; k -= 10) {
             let grad_color = document.createElement('div');
             grad_color.setAttribute('class', 'grad-color');
             grad_color.innerText = k + '%';
@@ -260,7 +267,7 @@ function makePattern() {
             let octave = tmp2[1] == 'None' ? 'None' : parseInt(tmp2[1]);
             let duration = tmp1[1] == 'None' ? 'None' : parseInt(tmp1[1]);
 
-            let tmp_json = {class_: class_, octave: octave, duration: duration};
+            let tmp_json = { class_: class_, octave: octave, duration: duration };
 
             pattern.push(tmp_json);
         }
@@ -312,7 +319,7 @@ function makeAPatternHoverBox(id, match_x, match_y, deg, pitch_deg, duration_deg
     let expected_infos = dur + '\n' + note;
     if (dur != '' || note != '')
         expected_infos = 'note attendue : ' + expected_infos;
-    
+
     //TODO: add info for the found note ? But this would need to get this information, so it would be needed to pass it through the url again, or read the mei file.
 
     //-Infos from match degree
@@ -324,7 +331,7 @@ function makeAPatternHoverBox(id, match_x, match_y, deg, pitch_deg, duration_deg
     // if (expected_note != null && expected_note.duration != 'None')
     //     deg_infos += `, degré de durée : ${duration_deg}%`;
 
-    if (membership_functions_degrees == null){
+    if (membership_functions_degrees == null) {
         deg_infos += `<br>degrés de notes :<ul style="padding-left: 20px; margin-top: 2px;">`;
         deg_infos += `<li><b>degré de hauteur</b> : ${pitch_deg}%</li>`;
         deg_infos += `<li><b>degré de durée</b> : ${duration_deg}%</li>`;
@@ -338,10 +345,10 @@ function makeAPatternHoverBox(id, match_x, match_y, deg, pitch_deg, duration_deg
         for (const item of contourItems) {
             const [name, value] = item.split('->').map(s => s.trim());
             if (name && value) {
-                deg_infos += `<li><b>${name}</b> : ${value*100}%</li>`;
+                deg_infos += `<li><b>${name}</b> : ${value * 100}%</li>`;
             }
         }
-        
+
         deg_infos += `</ul>`;
     }
 
@@ -352,14 +359,14 @@ function makeAPatternHoverBox(id, match_x, match_y, deg, pitch_deg, duration_deg
 
     //---Adding the box in the DOM
     document.getElementById('notation').append(info_box);
-    
+
     //---Adding mouse events
     const parent_note = document.getElementById(id);
 
     if (parent_note != null) {
         const notes_nodes = parent_note.getElementsByClassName('notehead');
 
-        for (let k = 0 ; k < notes_nodes.length ; ++k) {
+        for (let k = 0; k < notes_nodes.length; ++k) {
             notes_nodes[k].addEventListener('mousemove', (e) => showNoteInfo(e, info_box, id, match_x));
             notes_nodes[k].addEventListener('mouseout', () => hideNoteInfo(info_box));
         }
@@ -382,7 +389,7 @@ function makeAPatternHoverBox(id, match_x, match_y, deg, pitch_deg, duration_deg
  * @param {string} id - the note id ;
  * @param {number} match_x - the number of the match (used to show the box only if the current match is toggled on).
  */
-const showNoteInfo = function(event, info_box, id, match_x) {
+const showNoteInfo = function (event, info_box, id, match_x) {
     // Init
     const toggle_cb = document.getElementById(`toggle-match-${match_x}-cb`);
 
@@ -390,8 +397,8 @@ const showNoteInfo = function(event, info_box, id, match_x) {
     if (!toggle_cb.checked) // Do not show if match is not visible
         return;
 
-    for (let k = 0 ; k < match_indexes_by_id[id].length ; ++k) {
-        const toggle_other_cb  = document.getElementById(`toggle-match-${match_indexes_by_id[id][k]}-cb`);
+    for (let k = 0; k < match_indexes_by_id[id].length; ++k) {
+        const toggle_other_cb = document.getElementById(`toggle-match-${match_indexes_by_id[id][k]}-cb`);
 
         if (match_indexes_by_id[id][k] < match_x && toggle_other_cb.checked)
             return;
@@ -407,7 +414,7 @@ const showNoteInfo = function(event, info_box, id, match_x) {
  *
  * @param {HTMLElement} info_box - the concerned div to show.
  */
-const hideNoteInfo = function(info_box) {
+const hideNoteInfo = function (info_box) {
     info_box.style.display = 'none';
 }
 
@@ -417,8 +424,8 @@ const hideNoteInfo = function(info_box) {
 function makePatternHoverBoxes() {
     let ids = []; // will store the already viewed IDs.
 
-    for (let i = 0 ; i < matches.length ; ++i) {
-        for (let j = 0 ; j < matches[i].length ; ++j) {
+    for (let i = 0; i < matches.length; ++i) {
+        for (let j = 0; j < matches[i].length; ++j) {
             ids.push(matches[i][j].id);
             makeAPatternHoverBox(
                 matches[i][j].id,
@@ -503,7 +510,7 @@ function createMatchesHighlightToggles() {
     // const toggle_div = document.getElementById('match-toggle');
     const toggle_div = document.getElementById('match-toggle-checkboxes');
 
-    for (let k = 0 ; k < matches.length ; ++k) {
+    for (let k = 0; k < matches.length; ++k) {
         toggle_div.appendChild(makeAMatchToggle(k));
 
         // document.getElementById(`toggle-match-${k}-cb`).addEventListener('change', () => matchToggleHandler(k));
@@ -515,11 +522,11 @@ function createMatchesHighlightToggles() {
  * Called when "Highlight all" checkbox is clicked.
  * Changes the state of all the checkboxes to repeat the same.
  */
-const matchAllToggleHandler = function() {
+const matchAllToggleHandler = function () {
     const toggle_all_cb = document.getElementById(`toggle-all-cb`);
 
     // for (let k = 0 ; k < matches.length ; ++k) {
-    for (let k = matches.length - 1 ; k >= 0 ; --k) { // Reverse order to get the best color in last 'layer'
+    for (let k = matches.length - 1; k >= 0; --k) { // Reverse order to get the best color in last 'layer'
         document.getElementById(`toggle-match-${k}-cb`).checked = toggle_all_cb.checked;
         highlightMatch(k);
     }
@@ -530,14 +537,14 @@ const matchAllToggleHandler = function() {
  * In order to do this, it hides all the matches that are unchecked, and then color the ones that are checked.
  */
 function refreshHighlight() {
-    for (let k = 0 ; k < matches.length ; ++k) {
+    for (let k = 0; k < matches.length; ++k) {
         const toggle_cb = document.getElementById(`toggle-match-${k}-cb`);
 
         if (!toggle_cb.checked)
             highlightMatch(k);
     }
 
-    for (let k = matches.length - 1 ; k >= 0 ; --k) { // Reverse order to get the best color in last 'layer'
+    for (let k = matches.length - 1; k >= 0; --k) { // Reverse order to get the best color in last 'layer'
         const toggle_cb = document.getElementById(`toggle-match-${k}-cb`);
 
         if (toggle_cb.checked)
@@ -554,7 +561,7 @@ function highlightMatch(match_nb) {
     const toggle_cb = document.getElementById(`toggle-match-${match_nb}-cb`);
 
     // Highlight each note in the match `match_nb`
-    for (let k = 0 ; k < matches[match_nb].length ; ++k) {
+    for (let k = 0; k < matches[match_nb].length; ++k) {
         let col;
         if (toggle_cb.checked)
             col = getGradientColor(matches[match_nb][k].deg / 100);
@@ -565,7 +572,7 @@ function highlightMatch(match_nb) {
         if (parent_note != null) {
             const notes = parent_note.getElementsByClassName('notehead');
 
-            for (let k = 0 ; k < notes.length ; ++k)
+            for (let k = 0; k < notes.length; ++k)
                 notes[k].setAttribute('fill', col);
         }
     }
@@ -574,10 +581,10 @@ function highlightMatch(match_nb) {
 /**
     The handler to start playing the file
  **/
-const playMIDIHandler = function() {
+const playMIDIHandler = function () {
     // Get the MIDI file from the Verovio toolkit
     let base64midi = tk.renderToMIDI();
-    
+
     // Add the data URL prefixes describing the content
     let midiString = 'data:audio/midi;base64,' + base64midi;
     console.log(midiString)
@@ -626,7 +633,7 @@ const midiHightlightingHandler = function (event) {
 /**
  * Handler of the next page button
  * */
-const nextPageHandler = function() {
+const nextPageHandler = function () {
     //---Get next page
     let lastPage = tk.getPageCount();
     currentPage = Math.min(currentPage + 1, lastPage);
@@ -634,7 +641,7 @@ const nextPageHandler = function() {
     refreshPagination(currentPage, lastPage);
 
     //---Render next page
-    document.getElementById("notation").innerHTML = tk.renderToSVG(currentPage);
+    document.getElementById("notation-svg-container").innerHTML = tk.renderToSVG(currentPage);
     refreshHighlight();
     makePatternHoverBoxes(); // Make the hover boxes for the current page
 }
@@ -642,14 +649,14 @@ const nextPageHandler = function() {
 /**
  * Handler of the previous page button
  * */
-const prevPageHandler = function() {
+const prevPageHandler = function () {
     //---Get previous page
     currentPage = Math.max(currentPage - 1, 1);
 
     refreshPagination(currentPage, tk.getPageCount());
 
     //---Render previous page
-    document.getElementById("notation").innerHTML = tk.renderToSVG(currentPage);
+    document.getElementById("notation-svg-container").innerHTML = tk.renderToSVG(currentPage);
     refreshHighlight();
     makePatternHoverBoxes(); // Make the hover boxes for the current page
 }
@@ -681,4 +688,34 @@ function refreshPagination(currentPage, lastPage) {
         prev_bt.disabled = true;
     else
         prev_bt.disabled = false;
+}
+
+/**
+ * Extract the title, author and comment from the MEI file and put it over the SVG.
+ * @param {string} meiXML - the MEI file content
+ * @returns {void}
+ */
+function extractTitleAuthorComment(meiXML) {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(meiXML, 'text/xml');
+
+    const parentElement = xmlDoc.querySelectorAll('pgHead > rend');
+
+    // extract title, author and comment
+    const title = parentElement[0] ? parentElement[0].textContent.trim() : 'Unknown Title';
+    const author = parentElement[1] ? parentElement[1].textContent.trim() : 'Unknown Author';
+    const comment = parentElement[2] ? parentElement[2].textContent.trim() : 'No Comment';
+
+    let notation = document.getElementById('notation');
+    // create a div to hold the title, author and comment
+    let scoreMetadataDiv = document.createElement('div');
+    scoreMetadataDiv.setAttribute('id', 'score-metadata');
+    scoreMetadataDiv.innerHTML = "<h2>" + title + "</h2>" +
+        "<p><b>Author:</b> " + author + "</p>" +
+        "<p><b>Comment:</b> " + comment + "</p>";
+    notation.appendChild(scoreMetadataDiv);
+    let SvgContainer = document.createElement('div');
+    SvgContainer.setAttribute('id', 'notation-svg-container'); 
+    SvgContainer.style.height = notation.clientHeight - scoreMetadataDiv.clientHeight + 'px';
+    notation.appendChild(SvgContainer);
 }

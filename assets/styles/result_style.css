@@ -48,9 +48,9 @@ body {
 }
 
     #notation {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        /* display: flex; */
+        /* align-items: center; */
+        /* justify-content: center; */
         /* height:640px; */
         height:900px;
     }
