@@ -692,6 +692,7 @@ function refreshPagination(currentPage, lastPage) {
 
 /**
  * Extract the title, author and comment from the MEI file and put it over the SVG.
+ * it avoid text overlapping when the title, author and comment are too long.
  * @param {string} meiXML - the MEI file content
  * @returns {void}
  */

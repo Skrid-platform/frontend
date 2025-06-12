@@ -324,6 +324,10 @@ async function fillPreview(score_div, score_path, matches=null, parentWidth=180,
     fetch(score_path)
     .then( (response) => response.text() )
     .then( (meiXML) => {
+
+        // remove title, author and comment that are overlapping each other and are not useful in the preview
+        meiXML = meiXML.replace(/<pgHead.*?<\/pgHead>/s, '');
+
         tk.loadData(meiXML);
         let svg = tk.renderToSVG(1); // render the first page
         score_div.innerHTML = svg;
