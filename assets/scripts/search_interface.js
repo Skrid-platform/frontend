@@ -1260,113 +1260,115 @@ function init() {
     matchPicthCbHandler(); // Disable options that should be
     matchRhythmCbHandler();
     //contourAndTranspositionHandler(null);
-}
-  
-/**
- * MESSAGE TOAST BUTTON PRESET --------- PENSER A AJOUTER LA LOGIQUE TRANSPOSITION SINON MESSAGE
- */
-const toastTrigger1 = document.getElementById('stricte');
-const toastTrigger2 = document.getElementById('modereeMelo');
-const toastTrigger3 = document.getElementById('modereeRythm');
-const toastLiveExample1 = document.getElementById('liveToast1');
-const toastLiveExample2 = document.getElementById('liveToast2');
-const toastLiveExample3 = document.getElementById('liveToast3');
 
-// Show function 1
-if (toastTrigger1) {
-    const toastBootstrap1 = bootstrap.Toast.getOrCreateInstance(toastLiveExample1, { delay: 15000 }); // 5 secondes
-    toastTrigger1.addEventListener('click', () => {
-        toastBootstrap1.show();
 
-        if (melody.length === 0) {
-            toastBootstrap1.hide();  // Si les entrées sont incorrectes, cache le toast
-        } else {
-            toastBootstrap1.show();  // Si tout est ok, affiche le toast
+    /**
+     * MESSAGE TOAST BUTTON PRESET --------- PENSER A AJOUTER LA LOGIQUE TRANSPOSITION SINON MESSAGE
+     */
+    const toastTrigger1 = document.getElementById('stricte');
+    const toastTrigger2 = document.getElementById('modereeMelo');
+    const toastTrigger3 = document.getElementById('modereeRythm');
+    const toastLiveExample1 = document.getElementById('liveToast1');
+    const toastLiveExample2 = document.getElementById('liveToast2');
+    const toastLiveExample3 = document.getElementById('liveToast3');
 
-            // Hide function 2
-            if (toastLiveExample2) {
-                const toastBootstrap2 = bootstrap.Toast.getOrCreateInstance(toastLiveExample2);
-                toastBootstrap2.hide();
+    // Show function 1
+    if (toastTrigger1) {
+        const toastBootstrap1 = bootstrap.Toast.getOrCreateInstance(toastLiveExample1, { delay: 15000 }); // 5 secondes
+        toastTrigger1.addEventListener('click', () => {
+            toastBootstrap1.show();
+
+            if (melody.length === 0) {
+                toastBootstrap1.hide();  // Si les entrées sont incorrectes, cache le toast
+            } else {
+                toastBootstrap1.show();  // Si tout est ok, affiche le toast
+
+                // Hide function 2
+                if (toastLiveExample2) {
+                    const toastBootstrap2 = bootstrap.Toast.getOrCreateInstance(toastLiveExample2);
+                    toastBootstrap2.hide();
+                }
+
+                // Hide function 3
+                if (toastLiveExample3) {
+                    const toastBootstrap3 = bootstrap.Toast.getOrCreateInstance(toastLiveExample3);
+                    toastBootstrap3.hide();
+                }
             }
-
-            // Hide function 3
-            if (toastLiveExample3) {
-                const toastBootstrap3 = bootstrap.Toast.getOrCreateInstance(toastLiveExample3);
-                toastBootstrap3.hide();
-            }
-        }
-    });
-}
-
-// Show function 2
-if (toastTrigger2) {
-    const toastBootstrap2 = bootstrap.Toast.getOrCreateInstance(toastLiveExample2, { delay: 15000 }); // 5 secondes
-    toastTrigger2.addEventListener('click', () => {
-        toastBootstrap2.show();
-
-        if (melody.length === 0) {
-            toastBootstrap2.hide();  // Si les entrées sont incorrectes, cache le toast
-        } else {
-            toastBootstrap2.show();  // Si tout est ok, affiche le toast
-
-            // Hide function 1
-            if (toastLiveExample1) {
-                const toastBootstrap1 = bootstrap.Toast.getOrCreateInstance(toastLiveExample1);
-                toastBootstrap1.hide();
-            }
-
-            // Hide function 3
-            if (toastLiveExample3) {
-                const toastBootstrap3 = bootstrap.Toast.getOrCreateInstance(toastLiveExample3);
-                toastBootstrap3.hide();
-            }
-        }
-    });
-
-}
-
-// Show function 3
-if (toastTrigger3) {
-    const toastBootstrap3 = bootstrap.Toast.getOrCreateInstance(toastLiveExample3, { delay: 15000 }); // 5 secondes
-    toastTrigger3.addEventListener('click', () => {
-        toastBootstrap3.show();
-
-        if (melody.length === 0) {
-            toastBootstrap3.hide();  // Si les entrées sont incorrectes, cache le toast
-        } else {
-            toastBootstrap3.show();  // Si tout est ok, affiche le toast
-
-            // Hide function 2
-            if (toastLiveExample2) {
-                const toastBootstrap2 = bootstrap.Toast.getOrCreateInstance(toastLiveExample2);
-                toastBootstrap2.hide();
-            }
-
-            // Hide function 1
-            if (toastLiveExample1) {
-                const toastBootstrap1 = bootstrap.Toast.getOrCreateInstance(toastLiveExample1);
-                toastBootstrap1.hide();
-            }
-        }
-    });
-}
-
-/**
- * Toast Help button
- */
-document.addEventListener("DOMContentLoaded", function () {
-    var toastEl = document.querySelector('.toast');
-    var toast = new bootstrap.Toast(toastEl);
-    setTimeout(() => toast.show(), 2000); // S'affiche après 2 secondes
-  });
-
-/**
- * lock del/supp only in fuzzy-options
- */
-document.querySelectorAll('.fuzzy-options input').forEach(input => {
-input.addEventListener('keydown', (event) => {
-    if (event.key === 'Delete' || event.key === 'Backspace') {
-    event.stopPropagation();
+        });
     }
-});
-});
+
+    // Show function 2
+    if (toastTrigger2) {
+        const toastBootstrap2 = bootstrap.Toast.getOrCreateInstance(toastLiveExample2, { delay: 15000 }); // 5 secondes
+        toastTrigger2.addEventListener('click', () => {
+            toastBootstrap2.show();
+
+            if (melody.length === 0) {
+                toastBootstrap2.hide();  // Si les entrées sont incorrectes, cache le toast
+            } else {
+                toastBootstrap2.show();  // Si tout est ok, affiche le toast
+
+                // Hide function 1
+                if (toastLiveExample1) {
+                    const toastBootstrap1 = bootstrap.Toast.getOrCreateInstance(toastLiveExample1);
+                    toastBootstrap1.hide();
+                }
+
+                // Hide function 3
+                if (toastLiveExample3) {
+                    const toastBootstrap3 = bootstrap.Toast.getOrCreateInstance(toastLiveExample3);
+                    toastBootstrap3.hide();
+                }
+            }
+        });
+
+    }
+
+    // Show function 3
+    if (toastTrigger3) {
+        const toastBootstrap3 = bootstrap.Toast.getOrCreateInstance(toastLiveExample3, { delay: 15000 }); // 5 secondes
+        toastTrigger3.addEventListener('click', () => {
+            toastBootstrap3.show();
+
+            if (melody.length === 0) {
+                toastBootstrap3.hide();  // Si les entrées sont incorrectes, cache le toast
+            } else {
+                toastBootstrap3.show();  // Si tout est ok, affiche le toast
+
+                // Hide function 2
+                if (toastLiveExample2) {
+                    const toastBootstrap2 = bootstrap.Toast.getOrCreateInstance(toastLiveExample2);
+                    toastBootstrap2.hide();
+                }
+
+                // Hide function 1
+                if (toastLiveExample1) {
+                    const toastBootstrap1 = bootstrap.Toast.getOrCreateInstance(toastLiveExample1);
+                    toastBootstrap1.hide();
+                }
+            }
+        });
+    }
+
+    /**
+     * Toast Help button
+     */
+    document.addEventListener("DOMContentLoaded", function () {
+        var toastEl = document.querySelector('.toast');
+        var toast = new bootstrap.Toast(toastEl);
+        setTimeout(() => toast.show(), 2000); // S'affiche après 2 secondes
+      });
+
+    /**
+     * lock del/supp only in fuzzy-options
+     */
+    document.querySelectorAll('.fuzzy-options input').forEach(input => {
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Delete' || event.key === 'Backspace') {
+            event.stopPropagation();
+            }
+        });
+    });
+}
+

@@ -286,7 +286,7 @@ export function stopRecording() {
         console.log('Record terminé', blob);
         lastBlob = blob;
 
-        convertAudioToNotes(blob).then(notes => console.log(notes));
+        convertAudioToNotes(blob).then(notes => console.log(notes)); //TODO: display the notes
     });
 }
 
