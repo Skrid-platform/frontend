@@ -1,3 +1,8 @@
+/**
+ * @file Script for the audio recording interface
+ * @module micro_recorder_wav.js
+ */
+
 //========= Imports =========//
 import { loadPageN } from './paginated_results.js';
 import { unifyResults, extractMelodyFromQuery } from './preview_scores.js';
@@ -81,6 +86,11 @@ function manageOptions() {
 ///////////////  ################## ///////////////////////
 ///////////////  ################## ///////////////////////
 
+/**
+ * Starts the recording for the given duration.
+ *
+ * @param {number} [duration=4000] - the duration of the recording, in ms.
+ */
 export async function startRecording(duration = 4000) {
     if (isRecording) return;
     isRecording = true;
@@ -166,56 +176,82 @@ function sendQuery(fuzzyQuery) {
 }
 
 /**
+ * Send the recorded audio file to the backend in order to convert it to music notes (using `/convert-recording`).
+ *
+ * @param {Blob} blob - the recorded audio blob.
+ *
+ * @returns {Promise} the notes
+ */
+async function convertAudioToNotes(blob) {
+    const formData = new FormData();
+    formData.append("file", blob, "audio.wav");
+
+    return fetch(`${BASE_PATH}/convert-recording`, {
+        method: "POST",
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => data.notes)
+        .then(notes =>  notes)
+        .catch(err => {
+            console.error("Erreur lors de l'envoi du fichier audio :", err);
+        });
+}
+
+/**
  * Envoie le fichier audio et les paramètres fuzzy au backend.
  * Une fois la query générée par l'extraction audio (/createQueryFromAudio) reçue,
  * elle est utilisée directement pour lancer la recherche via sendQuery.
  *
  * @param {Blob} blob - Le blob audio enregistré.
  */
-function sendAudioFile(blob) {
+function sendAudioFile(blob) { //TODO: remove this (replace with `convertAudioToNotes`)
     const formData = new FormData();
-    formData.append("audio", blob, "audio.wav");
+    formData.append("file", blob, "audio.wav");
 
-    // Récupérer les paramètres depuis le DOM
-    const pitchDist = document.getElementById('pitch-dist-select').value;
-    const durationFactor = document.getElementById('duration-factor-select').value;
-    const durationGap = document.getElementById('duration-gap-select').value;
-    // Convertir alpha (si l'utilisateur entre 50 pour 50%, on doit obtenir 0.5)
-    const alphaRaw = document.getElementById('alpha-select').value;
-    const alpha = parseFloat(alphaRaw) / 100;
-    const transpose = document.getElementById('transpose-cb').checked;
-    const collection = document.getElementById('collections').value;
+    // // Récupérer les paramètres depuis le DOM
+    // const pitchDist = document.getElementById('pitch-dist-select').value;
+    // const durationFactor = document.getElementById('duration-factor-select').value;
+    // const durationGap = document.getElementById('duration-gap-select').value;
+    // // Convertir alpha (si l'utilisateur entre 50 pour 50%, on doit obtenir 0.5)
+    // const alphaRaw = document.getElementById('alpha-select').value;
+    // const alpha = parseFloat(alphaRaw) / 100;
+    // const transpose = document.getElementById('transpose-cb').checked;
+    // const collection = document.getElementById('collections').value;
+    //
+    //
+    // // Ajoute les paramètres dans le FormData
+    // formData.append("pitch_distance", pitchDist);
+    // formData.append("duration_factor", durationFactor);
+    // formData.append("duration_gap", durationGap);
+    // formData.append("alpha", alpha);
+    // formData.append("allow_transposition", transpose);
+    // formData.append("collection", collection);
 
+    // console.log(formData);
 
-    // Ajoute les paramètres dans le FormData
-    formData.append("pitch_distance", pitchDist);
-    formData.append("duration_factor", durationFactor);
-    formData.append("duration_gap", durationGap);
-    formData.append("alpha", alpha);
-    formData.append("allow_transposition", transpose);
-    formData.append("collection", collection);
-
-    console.log(formData);
-    fetch("/createQueryFromAudio", {
+    fetch(`${BASE_PATH}/convert-recording`, {
         method: "POST",
         body: formData
     })
-        .then(response => response.text())
-        .then(text => {
-            let result;
-            try {
-                result = JSON.parse(text);
-            } catch(e) {
-                console.error("Erreur de parsing de la réponse du serveur:", e);
-                alert("Erreur de parsing de la réponse.");
-                return;
-            }
-            console.log("Query retournée :", result.query);
-            const queryResult = document.getElementById("query-result");
-            if (queryResult) queryResult.textContent = result.query;
-            // On appelle directement sendQuery avec la query retournée
-            sendQuery(result.query);
-        })
+        .then(response => {console.log(response); response.json()})
+        .then(data => data.notes)
+        .then(notes => console.log(notes))
+        // .then(text => {
+        //     let result;
+        //     try {
+        //         result = JSON.parse(text);
+        //     } catch(e) {
+        //         console.error("Erreur de parsing de la réponse du serveur:", e);
+        //         alert("Erreur de parsing de la réponse.");
+        //         return;
+        //     }
+        //     console.log("Query retournée :", result.query);
+        //     const queryResult = document.getElementById("query-result");
+        //     if (queryResult) queryResult.textContent = result.query;
+        //     // On appelle directement sendQuery avec la query retournée
+        //     sendQuery(result.query);
+        // })
         .catch(err => {
             console.error("Erreur lors de l'envoi du fichier audio :", err);
         });
@@ -249,6 +285,8 @@ export function stopRecording() {
         checkingRecord = true;
         console.log('Record terminé', blob);
         lastBlob = blob;
+
+        convertAudioToNotes(blob).then(notes => console.log(notes));
     });
 }
 

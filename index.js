@@ -223,7 +223,7 @@ app.get('/fuzzy-query-from-microphone', async function (req, res) {
         // The query to get the authors is necessary to display the list of possible collections
         const authorQuery = "MATCH (s:Score) RETURN DISTINCT s.collection";
         const authorResponse = await queryDB(authorQuery);
-        authors = results.map(record => record['s.collection']);
+        authors = authorResponse.map(record => record['s.collection']);
     } catch(err) {
         log('error', `/fuzzy-query-from-microphone: ${err}`)
     }

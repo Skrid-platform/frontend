@@ -13,7 +13,7 @@ const BASE_PATH = window.BASE_PATH || ''; // ajustez si nécessaire
  * Initialise l'interface micro.
  */
 
-import { startRecording, stopRecording } from './micro_recorder_wav.js';
+import { startRecording } from './micro_recorder_wav.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('start-rec').addEventListener('click', () => {
