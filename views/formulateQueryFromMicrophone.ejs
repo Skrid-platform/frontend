@@ -33,120 +33,120 @@
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     </head>
     <style>
-.results-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-      .music-score-box {
-          width: 180px;
-          height: 250px;
-          background-color: #E6F2F8;
-          border-radius: 10px;
-          border: 2px solid #20AABD;
-          padding: 10px;
-          margin: 5px;
-          word-wrap: break-word;
-          overflow-x: hidden;
-          overflow-y: hidden;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-      }
-      .music-score-box:hover {
-          cursor: pointer;
-          box-shadow: 0 5px 10px rgba(0,0,0,0.3);
-          background-color: #dceaf1;
-      }
-      .music-score-box svg {
-          max-width: 100%;
-          max-height: 100%;
-      }
-      .score-preview {
-          text-decoration: none;
-          color:#000;
-          padding: 15px;
-      }
-      .score_title {
-          margin-left: 8px;
-          margin-top: 10px;
-          width: 180px;
-      }
-      .score_author {
-          font-size: 16px;
-          margin-left: 8px;
-      }
+        .results-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .music-score-box {
+            width: 180px;
+            height: 250px;
+            background-color: #e6f2f8;
+            border-radius: 10px;
+            border: 2px solid #20aabd;
+            padding: 10px;
+            margin: 5px;
+            word-wrap: break-word;
+            overflow-x: hidden;
+            overflow-y: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .music-score-box:hover {
+            cursor: pointer;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+            background-color: #dceaf1;
+        }
+        .music-score-box svg {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .score-preview {
+            text-decoration: none;
+            color:#000;
+            padding: 15px;
+        }
+        .score_title {
+            margin-left: 8px;
+            margin-top: 10px;
+            width: 180px;
+        }
+        .score_author {
+            font-size: 16px;
+            margin-left: 8px;
+        }
 
-      .nb-select {
-          width: 50px;
-      }
-      .nb-select-large {
-          width: 60px;
-      }
+        .nb-select {
+            width: 50px;
+        }
+        .nb-select-large {
+            width: 60px;
+        }
 
-      .intervals-cb {
-          display: grid;
-          float: right;
-      }
+        .intervals-cb {
+            display: grid;
+            float: right;
+        }
 
-      .tooltip-lb {
-          position: relative;
-          display: inline-block;
-          /* border-bottom: 1px dotted black; */
-      }
-      .tooltip-lb .tooltiptext {
-          visibility: hidden;
-          width: 150px;
-          /* background: #62aaddd0; */
-          background: #18767ed0;
-          /* color: #000; */
-          color: #fff;
-          text-align: center;
-          border-radius: 6px;
-          padding: 5px;
+        .tooltip-lb {
+            position: relative;
+            display: inline-block;
+            /* border-bottom: 1px dotted black; */
+        }
+        .tooltip-lb .tooltiptext {
+            visibility: hidden;
+            width: 150px;
+            /* background: #62aaddd0; */
+            background: #18767ed0;
+            /* color: #000; */
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
 
-          position: absolute;
-          z-index: 1;
-      }
-      .tooltip-lb:hover .tooltiptext {
-          visibility: visible;
-      }
+            position: absolute;
+            z-index: 1;
+        }
+        .tooltip-lb:hover .tooltiptext {
+            visibility: visible;
+        }
 
-      /* tooltip + alt for information button with hover */
-      /* Renommer la classe pour éviter les conflits */
-      .tooltip-lb-alt {
-          position: relative;
-          display: inline-block;
-      }
-      .tooltip-lb-alt .tooltiptext {
-          visibility: hidden;
-          width: 150px;
-          background: #18767ed0;
-          color: #fff;
-          text-align: center;
-          border-radius: 6px;
-          padding: 5px;
+        /* tooltip + alt for information button with hover */
+        /* renommer la classe pour éviter les conflits */
+        .tooltip-lb-alt {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip-lb-alt .tooltiptext {
+            visibility: hidden;
+            width: 150px;
+            background: #18767ed0;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
 
-          position: absolute;
-          z-index: 1;
-      }
-      .tooltip-lb-alt:hover .tooltiptext {
-          visibility: visible;
-      }
+            position: absolute;
+            z-index: 1;
+        }
+        .tooltip-lb-alt:hover .tooltiptext {
+            visibility: visible;
+        }
 
 
-      .info-note {
-          background: cornsilk;
-          border: 1px solid black;
-          border-radius: 5px;
-          padding: 5px;
-          position: absolute;
-      }
-      #styleCardReocrder{
-          box-shadow: 0 10px 10px rgba(0,0,0,0.1);
-          border: none;
-          border-radius: 5px;
-      }
+        .info-note {
+            background: cornsilk;
+            border: 1px solid black;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+        }
+        #stylecardreocrder{
+            box-shadow: 0 10px 10px rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 5px;
+        }
     </style>
     <body>
         <%- include('./partials/header', { currentPage: 'interface' }); %>
