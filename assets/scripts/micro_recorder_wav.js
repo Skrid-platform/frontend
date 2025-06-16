@@ -6,8 +6,12 @@
 //========= Imports =========//
 import { loadPageN } from './paginated_results.js';
 import { unifyResults, extractMelodyFromQuery } from './preview_scores.js';
+import { StaveRepresentation, Player } from './stave.js';
 
 // micro_recorder_wav.js
+
+const staveRepr = new StaveRepresentation();
+const player = new Player();
 
 let recorder;        // Instance de Recorder.js
 let audioContext;    // AudioContext
@@ -91,7 +95,7 @@ function manageOptions() {
  *
  * @param {number} [duration=4000] - the duration of the recording, in ms.
  */
-export async function startRecording(duration = 4000) {
+async function startRecording(duration = 4000) {
     if (isRecording) return;
     isRecording = true;
     try {
@@ -258,7 +262,7 @@ function sendAudioFile(blob) { //TODO: remove this (replace with `convertAudioTo
 }
 
 
-export function stopRecording() {
+function stopRecording() {
     if (!isRecording || !recorder) return;
     isRecording = false;
 
@@ -286,7 +290,15 @@ export function stopRecording() {
         console.log('Record terminé', blob);
         lastBlob = blob;
 
-        convertAudioToNotes(blob).then(notes => console.log(notes)); //TODO: display the notes
+        // Adding the notes to the stave
+        convertAudioToNotes(blob).then(notes => {
+            notes.forEach(n => {
+                let pitch = n[0];
+                let dur = n[1];
+
+                staveRepr.displayNote(pitch, [pitch], dur);
+            });
+        });
     });
 }
 
@@ -432,3 +444,5 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+
+export { startRecording, stopRecording, staveRepr, player };

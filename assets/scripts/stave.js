@@ -10,15 +10,6 @@ const { Renderer, Stave, Formatter, StaveNote, Accidental, Dot} = VexFlow;
 
 //====== Constants ======//
 /** All the possible durations for a note */
-const durationNote = {
-    '32': 1/32,         // thirty-second (triple croche)
-    '16': 1/16,         // sixteenth (double croche)
-    '8': 1/8,           // eighth (croche)
-    'q': 1/4,           // (quarter)
-    'h': 1/2,           // (half)
-    'w': 1              // (whole)
-};
-
 const durationNoteWithDots = {
     '32': 1/32,         // thirty-second (triple croche)
     '32d': 1/32 + 1/64, // dotted thirty-second (triple croche pointée)
@@ -65,9 +56,15 @@ class StaveRepresentation {
     }
 
     /**
-     * Initiates the HTML
+     * Initiates the HTML (vexflow).
+     * Also connects the buttons.
+     *
+     * @param {Player} player - the player associated to this stave
+     * @param {HTMLElement} playBt - the HTML button used to play / stop the melody. Here it is used to connect
+     * @param {HTMLElement} clearAllButton - the HTML button used to clear all the stave
+     * @param {HTMLElement} clearLastNoteButton - the HTML button used to clear the last note from the stave
      */
-    init() {
+    init(player, playBt, clearAllButton, clearLastNoteButton) {
         this.#html_elem = document.getElementById('music-score');
 
         /* global VexFlow */
@@ -86,6 +83,10 @@ class StaveRepresentation {
             this.#stave.addClef("treble");
             this.#stave.setContext(this.#context).draw();
         });
+
+        playBt.addEventListener('click', () => player.playMelodyBtHandler(playBt, this.melody));
+        clearAllButton.addEventListener('click', () => this.clear_all_pattern());
+        clearLastNoteButton.addEventListener('click', () => this.remove_last_note());
     }
 
     /**

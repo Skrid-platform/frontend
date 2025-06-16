@@ -10,8 +10,6 @@ import { loadPageN } from './paginated_results.js';
 import { unifyResults, extractMelodyFromQuery } from './preview_scores.js';
 import { StaveRepresentation, Player } from './stave.js';
 
-const { Renderer, Stave, Formatter, StaveNote, Accidental, Dot} = VexFlow;
-
 
 //============================= Init =============================//
 document.addEventListener("DOMContentLoaded", init);
@@ -640,18 +638,10 @@ function keyListener(event) {
  */
 function manageOptions() {
     const searchButton = document.querySelectorAll(".send-button"); // Search button // original -> document.getElementById("send-button")
-    const clearAllButton = document.getElementById("clear_all");
-    const clearLastNoteButton = document.getElementById("clear_last_note");
-    const playBt = document.getElementById('play_melody');
     const pitch_cb = document.getElementById('pitch-cb');
     const rhythm_cb = document.getElementById('rhythm-cb');
     const transpose_cb = document.getElementById('transpose-cb');
     //const contour_cb = document.getElementById('contour-cb');
-
-    // Add an event listener for the clear-buttons to call the corresponding method
-    clearAllButton.addEventListener('click', () => staveRepr.clear_all_pattern());
-    clearLastNoteButton.addEventListener('click', () => staveRepr.remove_last_note());
-    playBt.addEventListener('click', () => player.playMelodyBtHandler(document.getElementById('play_melody'), staveRepr.melody));
 
     // Add an event listener for the 'search' button
     //searchButton.addEventListener('click', searchButtonHandler); -> is original for 1 button use
@@ -807,7 +797,11 @@ function manageStaveAndMelody() {
     silenceBt.addEventListener('mousedown', () => keyDown('r'));
     silenceBt.addEventListener('mouseup', () => keyUp('r'));
 
-    staveRepr.init();
+    const clearAllButton = document.getElementById("clear_all");
+    const clearLastNoteButton = document.getElementById("clear_last_note");
+    const playBt = document.getElementById('play_melody');
+
+    staveRepr.init(player, playBt, clearAllButton, clearLastNoteButton);
 
     // The following code manages what to do when the buttons of the piano are pressed
     keysCheckbox.addEventListener("click", showHideKeys);
