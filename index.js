@@ -577,7 +577,7 @@ app.post('/convert-recording', upload.single('file'), async (req, res) => {
         if (response.status != 200) {
             return res.status(response.status).json({ error: data.error || 'Flask returned an error' });
         }
-        log('info', `/convert-recording: generated ${data.query}`);
+        log('info', '/convert-recording: Audio converted to notes.');
         return res.json(data);  // Forward response to browser
 
     } catch (error) {
