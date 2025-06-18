@@ -1,5 +1,6 @@
 # TODO
 - update change log
+- remove useless annotation in preview
 
 ## Bugs
 - accidental not considered on search (nor in data ingestion);

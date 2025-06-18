@@ -7,8 +7,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 
-const multer  = require('multer');
+const multer = require('multer');
 const { spawn } = require('child_process');
+
+const cors = require('cors'); // Import cors for development of vuejs frontend
 
 const app = express();
 const port = 3000;
@@ -19,20 +21,22 @@ const BASE_PATH = process.env.BASE_PATH || '';
 // Configuration de Multer pour stocker temporairement les fichiers audio dans le dossier 'uploads'
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-      cb(null, 'uploads/');  // Dossier de destination pour les fichiers uploadés
+        cb(null, 'uploads/');  // Dossier de destination pour les fichiers uploadés
     },
     filename: function (req, file, cb) {
-      // extension .wav, 
-      cb(null, file.originalname);
+        // extension .wav, 
+        cb(null, file.originalname);
     }
-  });
+});
 const upload = multer({ storage: storage });
 
 //setting view engine to ejs
 app.set("view engine", "ejs");
 
+app.use(cors()); // Use CORS for development of vuejs frontend
+
 app.use(express.static('assets'))
-app.use(bodyParser.json()) 
+app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use(express.static('data'));
@@ -42,7 +46,7 @@ app.use('/data', express.static('data'));
 app.use((req, res, next) => {
     res.locals.BASE_PATH = BASE_PATH;
     next();
-  });
+});
 
 
 //============================= Functions =============================//
@@ -66,7 +70,7 @@ function queryEditsDB(query) {
     let keywords = ['create', 'delete', 'set', 'remove', 'detach', 'load'];
     let queryLower = query.toLowerCase();
 
-    for (let k = 0 ; k < keywords.length ; ++k) {
+    for (let k = 0; k < keywords.length; ++k) {
         if (queryLower.includes(keywords[k])) {
             log('info', `query contains "${keywords[k].toUpperCase()}" keyword. Aborting it.`);
             return true;
@@ -131,7 +135,7 @@ app.get('/scripts/config.js', (req, res) => {
     `);
 });
 
-app.get("/", function(req,res){
+app.get("/", function (req, res) {
     res.render("home");
 });
 
@@ -173,7 +177,7 @@ app.get('/searchInterface', async function (req, res) {
         const authorQuery = "MATCH (s:Score) RETURN DISTINCT s.collection";
         const results = await queryDB(authorQuery);
         authors = results.map(record => record['s.collection']);
-    } catch(err) {
+    } catch (err) {
         log('error', `/searchInterface: ${err}`)
     }
 
@@ -197,7 +201,7 @@ app.get('/contourSearchInterface', async function (req, res) {
         const authorQuery = "MATCH (s:Score) RETURN DISTINCT s.collection";
         const results = await queryDB(authorQuery);
         authors = results.map(record => record['s.collection']);
-    } catch(err) {
+    } catch (err) {
         log('error', `/contourSearchInterface: ${err}`)
     }
 
@@ -221,7 +225,7 @@ app.get('/fuzzy-query-from-microphone', async function (req, res) {
         const authorQuery = "MATCH (s:Score) RETURN DISTINCT s.collection";
         const authorResponse = await queryDB(authorQuery);
         authors = results.map(record => record['s.collection']);
-    } catch(err) {
+    } catch (err) {
         log('error', `/fuzzy-query-from-microphone: ${err}`)
     }
 
@@ -276,30 +280,6 @@ app.get('/result', (req, res) => {
 });
 
 /**
- * This endpoint is called to get the score of a specific composer/author.
- *
- * GET
- *
- * @constant /getCollectionByAuthor
- */
-app.get('/getCollectionByAuthor', async (req, res) => {
-    let results = [];
-    const name = req.query.author;
-
-    try {
-        const myQuery = "MATCH (s:Score) WHERE s.collection CONTAINS $name RETURN s ORDER BY s.source";
-        authors = results.map(record => record['s']);
-    } catch(err) {
-        log('error', `/getCollectionByAuthor: ${err}`)
-    }
-
-    res.json({
-        results: results,
-        author: name,
-    });
-})
-
-/**
  * This endpoint will search for all the scores containing in the title the string inserted by the user in the search bar.
  *
  * Note: not currently used (seems that it was used with a text search bar at the top of the piano interface page).
@@ -334,6 +314,30 @@ app.get('/search', async function (req, res) {
     });
 });
 
+//============================= Endpoints (get) =============================//
+/**
+ * This endpoint will return the list of authors (collections) from the database.
+ *
+ * GET
+ *
+ * @constant /authors
+ */
+app.get('/authors', async function (req, res) {
+    console.log('Fetching authors from the database...');
+    let authors = [];
+
+    try {
+        const results = await queryDB("MATCH (s:Score) RETURN DISTINCT s.collection");
+        authors = results.map(record => record['s.collection']);
+        console.log(`/authors: found ${authors} authors`);
+    } catch (err) {
+        log('error', `/authors: ${err.message}`);
+    }
+
+    res.json(authors);
+});
+
+
 //============================= Endpoints (post) =============================//
 /**
  * This endpoint sends the query to the database (if it does not modify the database) and send the result back to the client.
@@ -358,17 +362,17 @@ app.post('/crisp-query-results', (req, res) => {
             query: query
         })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error)
-            return res.json({ error: data.error });
+        .then(response => response.json())
+        .then(data => {
+            if (data.error)
+                return res.json({ error: data.error });
 
-        return res.json({ results: data.results });
-    })
-    .catch(error => {
-        log('error', `/crisp-query-results: ${error.message}`);
-        return res.json({ error: error.message });
-    });
+            return res.json({ results: data.results });
+        })
+        .catch(error => {
+            log('error', `/crisp-query-results: ${error.message}`);
+            return res.json({ error: error.message });
+        });
 });
 
 /**

@@ -84,6 +84,8 @@ Open `docs/index.html` in your browser.
 
 For database setup and ingestion scripts, see the backend project.
 
+- cors package was install for develloppement, don't need in production. need cors to allow vue dev server to connect to frontend server
+
 ---
 
 ## 🖊️ Roadmap, Known Bugs & Tasks
