@@ -32,6 +32,56 @@ const searchButtonHandler = function() {
         alert('Veuillez enregistrer un audio.');
         return;
     }
+
+    //TODO: check that the code below works. Also, make something better (it is copied from search_interface.js ...)
+    const results_container = $('#results-container');
+
+    const pitch_cb = document.getElementById('pitch-cb');
+    // const octave_cb = document.getElementById('octave-cb');
+    const rhythm_cb = document.getElementById('rhythm-cb');
+
+    const pitch_dist_select = document.getElementById('pitch-dist-select');
+    const duration_factor_select = document.getElementById('duration-factor-select');
+    const duration_gap_select = document.getElementById('duration-gap-select');
+    const alpha_select = document.getElementById('alpha-select');
+    const transposition_cb = document.getElementById('transpose-cb');
+    const homothety_cb = document.getElementById('homothety-cb');
+    const incipit_cb = document.getElementById('incipit-cb');
+    //const contour_cb = document.getElementById('contour-cb');
+
+    if (!pitch_cb.checked && !rhythm_cb.checked /*&& !contour_cb.checked*/) {
+        alert('You have ignored all settings (pitch, rhythm and contour).\nPlease select at least one.\nIf you want to browse the scores, check the collection page.')
+        return;
+    }
+
+    if ((transposition_cb.checked /*|| contour_cb.checked*/) && melody.length == 1) {
+        alert('For transposition and contour search, at least two notes are needed (because it is based on interval between notes).');
+        return;
+    }
+
+    // Write that a search is performing
+    results_container.empty();
+    results_container.append($('<h3>').text('Chargement...'));
+
+    createQuery(
+        !pitch_cb.checked,
+        !pitch_cb.checked, // dissociating octave from note class is not pertinent, so it is ignored.
+        !rhythm_cb.checked,
+        pitch_dist_select.value,
+        duration_factor_select.value,
+        duration_gap_select.value,
+        alpha_select.value / 100,
+        transposition_cb.checked,
+        homothety_cb.checked,
+        incipit_cb.checked,
+        //contour_cb.checked
+    ).then(
+        fuzzyQuery => sendQuery(fuzzyQuery)
+    );
+
+    // Sélectionne le container qui doit être affiché après la recherche
+    const resultsContainer = document.querySelector(".container_2");
+    resultsContainer.style.display = "flex";
 };
 
 /**
@@ -202,66 +252,6 @@ async function convertAudioToNotes(blob) {
         });
 }
 
-/**
- * Envoie le fichier audio et les paramètres fuzzy au backend.
- * Une fois la query générée par l'extraction audio (/createQueryFromAudio) reçue,
- * elle est utilisée directement pour lancer la recherche via sendQuery.
- *
- * @param {Blob} blob - Le blob audio enregistré.
- */
-function sendAudioFile(blob) { //TODO: remove this (replace with `convertAudioToNotes`)
-    const formData = new FormData();
-    formData.append("file", blob, "audio.wav");
-
-    // // Récupérer les paramètres depuis le DOM
-    // const pitchDist = document.getElementById('pitch-dist-select').value;
-    // const durationFactor = document.getElementById('duration-factor-select').value;
-    // const durationGap = document.getElementById('duration-gap-select').value;
-    // // Convertir alpha (si l'utilisateur entre 50 pour 50%, on doit obtenir 0.5)
-    // const alphaRaw = document.getElementById('alpha-select').value;
-    // const alpha = parseFloat(alphaRaw) / 100;
-    // const transpose = document.getElementById('transpose-cb').checked;
-    // const collection = document.getElementById('collections').value;
-    //
-    //
-    // // Ajoute les paramètres dans le FormData
-    // formData.append("pitch_distance", pitchDist);
-    // formData.append("duration_factor", durationFactor);
-    // formData.append("duration_gap", durationGap);
-    // formData.append("alpha", alpha);
-    // formData.append("allow_transposition", transpose);
-    // formData.append("collection", collection);
-
-    // console.log(formData);
-
-    fetch(`${BASE_PATH}/convert-recording`, {
-        method: "POST",
-        body: formData
-    })
-        .then(response => {console.log(response); response.json()})
-        .then(data => data.notes)
-        .then(notes => console.log(notes))
-        // .then(text => {
-        //     let result;
-        //     try {
-        //         result = JSON.parse(text);
-        //     } catch(e) {
-        //         console.error("Erreur de parsing de la réponse du serveur:", e);
-        //         alert("Erreur de parsing de la réponse.");
-        //         return;
-        //     }
-        //     console.log("Query retournée :", result.query);
-        //     const queryResult = document.getElementById("query-result");
-        //     if (queryResult) queryResult.textContent = result.query;
-        //     // On appelle directement sendQuery avec la query retournée
-        //     sendQuery(result.query);
-        // })
-        .catch(err => {
-            console.error("Erreur lors de l'envoi du fichier audio :", err);
-        });
-}
-
-
 function stopRecording() {
     if (!isRecording || !recorder) return;
     isRecording = false;
@@ -292,11 +282,28 @@ function stopRecording() {
 
         // Adding the notes to the stave
         convertAudioToNotes(blob).then(notes => {
+            console.log(notes);
+
             notes.forEach(n => {
                 let pitch = n[0];
                 let dur = n[1];
+                let dots = n[2];
 
-                staveRepr.displayNote(pitch, [pitch], dur);
+                let pitch_0, pitch_arr;
+                if (Array.isArray(pitch)) { // This is a chord
+                    pitch_0 = pitch[0];
+                    pitch_arr = pitch;
+                }
+                else {
+                    pitch_0 = pitch;
+                    pitch_arr = [pitch];
+                }
+
+                if (dots == 1) {
+                    dur += 'd';
+                }
+
+                staveRepr.displayNote(pitch_0, pitch_arr, dur);
             });
         });
     });
