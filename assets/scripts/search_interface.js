@@ -141,16 +141,16 @@ async function createQuery(ignore_pitch=false, ignore_octave=false, ignore_rhyth
     //------Create the `notes` for the python script
     
     let notes = '[';
-    for (let k = 0 ; k < melody.length ; ++k) {
+    for (let k = 0 ; k < staveRepr.melody.length ; ++k) {
         notes += '[';
 
-        for (let note_idx = 0 ; note_idx < melody[k].keys.length ; ++note_idx) {
-            let note = melody[k].keys[note_idx];
+        for (let note_idx = 0 ; note_idx < staveRepr.melody[k].keys.length ; ++note_idx) {
+            let note = staveRepr.melody[k].keys[note_idx];
 
             //---Add note class ('a', 'gs', ...)
             if (ignore_pitch /*&& !contour_match*/)
                 notes += '(None, ';
-            else if (melody[k].noteType == 'r') // rest
+            else if (staveRepr.melody[k].noteType == 'r') // rest
                 notes += "('r', ";
             else {
                 let class_ = note.split('/')[0];
@@ -159,7 +159,7 @@ async function createQuery(ignore_pitch=false, ignore_octave=false, ignore_rhyth
             }
 
             //---Add octave
-            if ((ignore_octave || melody[k].noteType == 'r') /*&& !contour_match*/)
+            if ((ignore_octave || staveRepr.melody[k].noteType == 'r') /*&& !contour_match*/)
                 notes += 'None), ';
             else {
                 let octave = note.split('/')[1];
@@ -171,12 +171,12 @@ async function createQuery(ignore_pitch=false, ignore_octave=false, ignore_rhyth
         if (ignore_rhythm)
             notes += 'None], ';
         else {
-            let duration_string = melody[k].dots > 0 ? melody[k].duration + 'd' : melody[k].duration; //TODO: will not work for multi-dots
+            let duration_string = staveRepr.melody[k].dots > 0 ? staveRepr.melody[k].duration + 'd' : staveRepr.melody[k].duration; //TODO: will not work for multi-dots
             // let dur_inv = 1 / durationNoteWithDots[duration_string];
 
-            // let duration_dur = melody[k].dots > 0 ? `${1 / melody[k].duration}, 1` : `${1 / melody[k].duration}`;
-            let dur = 1 / durationNote[melody[k].duration];
-            if(melody[k].dots > 0){
+            // let duration_dur = staveRepr.melody[k].dots > 0 ? `${1 / staveRepr.melody[k].duration}, 1` : `${1 / staveRepr.melody[k].duration}`;
+            let dur = 1 / durationNote[staveRepr.melody[k].duration];
+            if(staveRepr.melody[k].dots > 0){
                 dur += `, 1`
             }
             notes += `${dur}], `;
@@ -290,7 +290,7 @@ const searchButtonHandler = function() {
         return;
     }
 
-    if ((transposition_cb.checked /*|| contour_cb.checked*/) && melody.length == 1) {
+    if ((transposition_cb.checked /*|| contour_cb.checked*/) && staveRepr.melody.length == 1) {
         alert('For transposition and contour search, at least two notes are needed (because it is based on interval between notes).');
         return;
     }
@@ -955,7 +955,7 @@ function init() {
         toastTrigger1.addEventListener('click', () => {
             toastBootstrap1.show();
 
-            if (melody.length === 0) {
+            if (staveRepr.melody.length === 0) {
                 toastBootstrap1.hide();  // Si les entrées sont incorrectes, cache le toast
             } else {
                 toastBootstrap1.show();  // Si tout est ok, affiche le toast
@@ -981,7 +981,7 @@ function init() {
         toastTrigger2.addEventListener('click', () => {
             toastBootstrap2.show();
 
-            if (melody.length === 0) {
+            if (staveRepr.melody.length === 0) {
                 toastBootstrap2.hide();  // Si les entrées sont incorrectes, cache le toast
             } else {
                 toastBootstrap2.show();  // Si tout est ok, affiche le toast
@@ -1008,7 +1008,7 @@ function init() {
         toastTrigger3.addEventListener('click', () => {
             toastBootstrap3.show();
 
-            if (melody.length === 0) {
+            if (staveRepr.melody.length === 0) {
                 toastBootstrap3.hide();  // Si les entrées sont incorrectes, cache le toast
             } else {
                 toastBootstrap3.show();  // Si tout est ok, affiche le toast
