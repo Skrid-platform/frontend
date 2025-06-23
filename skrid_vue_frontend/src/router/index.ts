@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import  HomeView from '@/views/HomeView.vue';
 import  PlusView from '@/views/PlusView.vue';
-import  CollectionsView from '@/views/Collections.vue';
+import  CollectionsView from '@/views/CollectionsView.vue';
+import ReferencesView from '@/views/ReferencesView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,6 +22,11 @@ const router = createRouter({
       name: 'collections',
       component: CollectionsView,
     },
+    {
+      path: '/references',
+      name: 'references',
+      component: ReferencesView,
+    }
   ],
 })
 
