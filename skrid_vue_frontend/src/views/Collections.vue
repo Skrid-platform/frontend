@@ -21,7 +21,7 @@
             v-for="(author, index) in authors.listeAuthors"
             :key="index"
             class="btn list-group-item-action w-75 mx-auto d-flex align-items-center"
-            :class="selectedIndexAuthor == index ? 'selected' : 'authors'"
+            :class="authors.selectedAuthorIndex == index ? 'selected' : 'authors'"
             @click="authorButtonHandler(author, index)"
           >
             {{ author }}
@@ -29,49 +29,48 @@
         </div>
       </div>
       <!-- PARTITIONS VIEW (avec du margin-left pour ne pas être caché sous le menu) -->
-      <div class="archives" style="margin-left: 18rem">
+      <div class="archives">
         <p id="archives" class="text-secondary m-4">
           Télécharger la collection sous la forme d'une archive :
-          <a :href="`data/${selectedNameAuthor}/archives/${selectedNameAuthor}_FilesMei.zip`">MEI</a>,
-          <a :href="`data/${selectedNameAuthor}/archives/${selectedNameAuthor}_FilesLy.zip`">LY</a>,
-          <a :href="`data/${selectedNameAuthor}/archives/${selectedNameAuthor}_FilesMid.zip`">MID</a>,
-          <a :href="`data/${selectedNameAuthor}/archives/${selectedNameAuthor}_FilesMusicXML.zip`">MUSICXML</a>,
-          <a :href="`data/${selectedNameAuthor}/archives/${selectedNameAuthor}_FilesPdf.zip`">PDF</a>,
-          <a :href="`data/${selectedNameAuthor}/archives/${selectedNameAuthor}_FilesSvg.zip`">SVG</a>
+          <a :href="`data/${authors.selectedNameAuthor}/archives/${authors.selectedNameAuthor}_FilesMei.zip`">MEI</a>,
+          <a :href="`data/${authors.selectedNameAuthor}/archives/${authors.selectedNameAuthor}_FilesLy.zip`">LY</a>,
+          <a :href="`data/${authors.selectedNameAuthor}/archives/${authors.selectedNameAuthor}_FilesMid.zip`">MID</a>,
+          <a :href="`data/${authors.selectedNameAuthor}/archives/${authors.selectedNameAuthor}_FilesMusicXML.zip`">MUSICXML</a>,
+          <a :href="`data/${authors.selectedNameAuthor}/archives/${authors.selectedNameAuthor}_FilesPdf.zip`">PDF</a>,
+          <a :href="`data/${authors.selectedNameAuthor}/archives/${authors.selectedNameAuthor}_FilesSvg.zip`">SVG</a>
         </p>
-        <paginated-result :data="dataCollection"/>
+        <paginated-result :data="collectionScoresMetadata" />
       </div>
     </div>
   </div>
-
-  <!-- Hidden div to store authors data (c'est moche !!!)-->
-  <!-- <div id="authors" style="display: none;">
-    <%= JSON.stringify(authors) %>
-  </div> -->
 </template>
 
 <script setup>
 import PaginatedResult from '@/components/common/PaginatedResult.vue';
+import { fetchCollectionScoresNamesByAuthor } from '@/services/dataBaseQueryServices';
 import { useAuthorsStore } from '@/stores/authorsStore';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 defineOptions({
   name: 'CollectionsView',
 });
 
 const authors = useAuthorsStore();
-const selectedIndexAuthor = ref(0);
-const selectedNameAuthor = computed(() => authors.listeAuthors[selectedIndexAuthor.value]);
-
-const dataCollection = ref([]);
+const collectionScoresMetadata = ref(null);
 
 onMounted(() => {
-  authors.loadAuthors();
-  
+  authors.loadAuthors().then(() => {
+    fetchCollectionScoresNamesByAuthor(authors.selectedAuthorName).then((data) => {
+      collectionScoresMetadata.value = data;
+    });
+  });
 });
 
 const authorButtonHandler = (author, index) => {
-  selectedIndexAuthor.value = index;
+  authors.selectedAuthorIndex = index;
+  fetchCollectionScoresNamesByAuthor(authors.selectedAuthorName).then((data) => {
+    collectionScoresMetadata.value = data;
+  });
 };
 </script>
 
@@ -100,5 +99,9 @@ const authorButtonHandler = (author, index) => {
 .authors:hover {
   /* background-color: #d0d0d0; */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.archives{
+  margin-left: 18rem;
+  width: 100%;
 }
 </style>
