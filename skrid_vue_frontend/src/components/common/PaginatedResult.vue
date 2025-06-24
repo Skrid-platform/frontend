@@ -64,7 +64,7 @@ defineOptions({
 
 const props = defineProps({
   data: {
-    type: Array,
+    type: [Array, null],
     required: true,
   },
 });
@@ -117,7 +117,6 @@ watch(pageNb, () => {
 watch(
   () => props.data,
   () => {
-    console.log('data changed, reloading page 1');
     // reset pageNb to 1 when data changes
     if (pageNb.value === 1) {
       //
