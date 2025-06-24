@@ -26,7 +26,7 @@ const router = createRouter({
       path: '/references',
       name: 'references',
       component: ReferencesView,
-    }
+    },
   ],
 })
 

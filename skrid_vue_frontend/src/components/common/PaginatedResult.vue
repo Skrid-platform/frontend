@@ -10,12 +10,12 @@
       <button id="nextPage" class="pagination-bt" :disabled="pageNb === nbPages" @click="nextDataPageHandler()">
         Page suivante
       </button>
-      <select id="nb_per_page_select">
-        <option @click="nbPerPageHandler(10)" value="10">10</option>
-        <option @click="nbPerPageHandler(20)" value="20">20</option>
-        <option @click="nbPerPageHandler(50)" value="50">50</option>
-        <option @click="nbPerPageHandler(100)" value="100">100</option>
-        <option @click="nbPerPageHandler('*')" value="*">Tout</option>
+      <select id="nb_per_page_select" @click="nbPerPageHandler($event.target.value)">
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+        <option value="*">Tout</option>
       </select>
       <label id="nb_per_page_lb"> par page</label>
     </div>
@@ -80,7 +80,7 @@ let pageNb = ref(0);
 let nbPerPage = ref(10);
 let nbPages = computed(() => {
   if (!props.data || props.data.length === 0) return 0; // If no data, no pages
-  if (nbPerPage.value === '*') return 1; // If all items are shown, only one page is needed
+  if (nbPerPage.value === nbScores.value) return 1; // If all items are shown, only one page is needed
   return Math.ceil(nbScores.value / nbPerPage.value); // Calculate the number of pages needed
 });
 
@@ -88,8 +88,9 @@ function nbPerPageHandler(value) {
   if (value === '*') {
     nbPerPage.value = nbScores.value;
   } else {
-    nbPerPage.value = parseInt(value);
+    nbPerPage.value = value;
   }
+  LoadPageN();
 }
 
 function nextDataPageHandler() {
@@ -107,7 +108,8 @@ watch(pageNb, () => {
   } else if (pageNb.value > nbPages) {
     pageNb.value = nbPages;
   }
-  if (nbPages.value > 0) { // only load page if there are pages
+  if (nbPages.value > 0) {
+    // only load page if there are pages
     LoadPageN();
   }
 });
@@ -117,7 +119,8 @@ watch(
   () => {
     console.log('data changed, reloading page 1');
     // reset pageNb to 1 when data changes
-    if(pageNb.value === 1) { // 
+    if (pageNb.value === 1) {
+      //
       LoadPageN();
     } else {
       pageNb.value = 1; // reset to first page
@@ -139,12 +142,12 @@ function LoadPageN() {
       fetchMeiFileByFileName(fileName, authors.selectedAuthorName).then((meiXML) => {
         // extract title
         let title;
-        try{ 
+        try {
           title = meiXML
-          .match(/<pgHead.*?<\/pgHead>/s)[0]
-          .match(/<rend.*?<\/rend>/s)[0]
-          .match(/>.*?</s)[0]
-          .slice(1, -1);
+            .match(/<pgHead.*?<\/pgHead>/s)[0]
+            .match(/<rend.*?<\/rend>/s)[0]
+            .match(/>.*?</s)[0]
+            .slice(1, -1);
         } catch (e) {
           try {
             title = meiXML
@@ -162,13 +165,13 @@ function LoadPageN() {
           // parameters for rendering
           // same as in ejs version
           // parameter never used in the ejs version only the preset value
-          let parentWidth = 180;
-          let parentHeight = 250;
-          let zoom = 20;
-          let pageHeight = (parentHeight * 100) / zoom;
-          let pageWidth = (parentWidth * 100) / zoom;
+          const parentWidth = 180;
+          const parentHeight = 250;
+          const zoom = 20;
+          const pageHeight = (parentHeight * 100) / zoom;
+          const pageWidth = (parentWidth * 100) / zoom;
 
-          let options = {
+          const options = {
             pageHeight: pageHeight,
             pageWidth: pageWidth,
             scale: zoom,

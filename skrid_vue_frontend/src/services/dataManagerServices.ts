@@ -3,14 +3,11 @@
  *
  * @param {*} data - the page data ;
  * @param {number} pageNb - the number of the page to get
- * @param {number | '*'} numberPerPage - the number of items per page. '*' for all.
+ * @param {number} numberPerPage - the number of items per page. '*' for all.
  *
  * @return {json[]} data for the page `pageNb`.
  */
-export function getPageN(data: any[], pageNb: number, numberPerPage: any) {
-    if (numberPerPage == '*') {
-        numberPerPage = data.length;
-    }
+export function getPageN(data: any[], pageNb: number, numberPerPage: number) {
 
     return data.slice((pageNb - 1) * numberPerPage, pageNb * numberPerPage);
 }
