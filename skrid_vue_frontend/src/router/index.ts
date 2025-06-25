@@ -1,8 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import  HomeView from '@/views/HomeView.vue';
-import  PlusView from '@/views/PlusView.vue';
-import  CollectionsView from '@/views/CollectionsView.vue';
-import ReferencesView from '@/views/ReferencesView.vue';
+import HomeView from '@/views/HomeView.vue';
+import PlusView from '@/views/PlusView.vue';
+import CollectionsView from '@/views/CollectionsView.vue';
 import SearchInterfaceView from '@/views/SearchInterfaceView.vue';
 
 const router = createRouter({
@@ -16,7 +15,7 @@ const router = createRouter({
     {
       path: '/plus',
       name: 'plus',
-      component: PlusView,
+      component: () => import('@/views/PlusView.vue'),
     },
     {
       path: '/collections',
@@ -26,7 +25,7 @@ const router = createRouter({
     {
       path: '/references',
       name: 'references',
-      component: ReferencesView,
+      component: () => import('@/views/ReferencesView.vue'),
     },
     {
       path: '/help',
