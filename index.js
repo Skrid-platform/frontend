@@ -9,6 +9,9 @@ const bodyParser = require('body-parser');
 
 const multer = require('multer');
 const { spawn } = require('child_process');
+const fs = require('fs');
+const axios = require('axios');
+const FormData = require('form-data');
 
 const cors = require('cors'); // Import cors for development of vuejs frontend
 
@@ -224,8 +227,8 @@ app.get('/fuzzy-query-from-microphone', async function (req, res) {
         // The query to get the authors is necessary to display the list of possible collections
         const authorQuery = "MATCH (s:Score) RETURN DISTINCT s.collection";
         const authorResponse = await queryDB(authorQuery);
-        authors = results.map(record => record['s.collection']);
-    } catch (err) {
+        authors = authorResponse.map(record => record['s.collection']);
+    } catch(err) {
         log('error', `/fuzzy-query-from-microphone: ${err}`)
     }
 
@@ -542,6 +545,48 @@ app.post('/fuzzy-query-results', async (req, res) => {
     } catch (err) {
         console.error(`/fuzzy-query-results: error`, err);
         return res.status(500).json({ error: 'Internal server error contacting Flask' });
+    }
+});
+
+/**
+ * This endpoint connects to the backend /convert-recording to convert the recording to notes.
+ *
+ * Data to post : the audio file.
+ *
+ * Returns the notes, in the following form: `{'notes': string}` TODO: is this correct?
+ *
+ * POST
+ *
+ * @constant /convert-recording
+ */
+app.post('/convert-recording', upload.single('file'), async (req, res) => {
+    try {
+        console.log(req.file)
+
+        const filePath = req.file.path;
+        const formData = new FormData();
+        const fileStream = fs.createReadStream(filePath);
+        formData.append('file', fileStream);
+
+        const response = await axios.post(`${API_BASE_URL}/convert-recording`, formData, {
+            headers: formData.getHeaders()
+        });
+
+        const data = await response.data;  // Receive { notes: ... } or { error: ... }
+        console.log(data)
+
+        // Delete the local file
+        fs.unlinkSync(filePath);
+
+        if (response.status != 200) {
+            return res.status(response.status).json({ error: data.error || 'Flask returned an error' });
+        }
+        log('info', '/convert-recording: Audio converted to notes.');
+        return res.json(data);  // Forward response to browser
+
+    } catch (error) {
+        console.error('/convert-recording failed:', error);
+        return res.status(500).json({ error: 'Internal server error connecting to Flask API' });
     }
 });
 

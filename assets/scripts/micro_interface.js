@@ -1,6 +1,8 @@
 //============= Imports =============//
 import { loadPageN } from './paginated_results.js';
 import { unifyResults, extractMelodyFromQuery } from './preview_scores.js';
+import { StaveRepresentation, Player } from './stave.js';
+import { startRecording, staveRepr, player } from './micro_recorder_wav.js';
 
 
 //============= Variables globales =============//
@@ -13,17 +15,23 @@ const BASE_PATH = window.BASE_PATH || ''; // ajustez si nécessaire
  * Initialise l'interface micro.
  */
 
-import { startRecording, stopRecording } from './micro_recorder_wav.js';
+document.addEventListener("DOMContentLoaded", init);
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById('start-rec').addEventListener('click', () => {
-    // Démarrer l'enregistrement pour 5 secondes (ajustez la durée si nécessaire)
-    startRecording(4000);
-  });
-  //document.getElementById('stop-rec').addEventListener('click', () => {
-  //  stopRecording();
-  //});
-});
+function init() {
+    document.getElementById('start-rec').addEventListener('click', () => {
+        startRecording(4000);
+    });
+    //document.getElementById('stop-rec').addEventListener('click', () => {
+    //  stopRecording();
+    //});
+
+    // Create the HTML for the stave
+    const clearAllButton = document.getElementById("clear_all");
+    const clearLastNoteButton = document.getElementById("clear_last_note");
+    const playBt = document.getElementById('play_melody');
+
+    staveRepr.init(player, playBt, clearAllButton, clearLastNoteButton);
+}
 
 function getPageData() {
     return JSON.parse(document.getElementById('data').textContent);

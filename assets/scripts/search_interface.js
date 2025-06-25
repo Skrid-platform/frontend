@@ -8,6 +8,7 @@
 //========= Imports =========//
 import { loadPageN } from './paginated_results.js';
 import { unifyResults, extractMelodyFromQuery } from './preview_scores.js';
+import { StaveRepresentation, Player } from './stave.js';
 
 
 //============================= Init =============================//
@@ -15,45 +16,25 @@ document.addEventListener("DOMContentLoaded", init);
 
 
 //============================= Global variables =============================//
-const { Renderer, Stave, Formatter, StaveNote, Accidental, Dot} = VexFlow;
-
-/** This is the array that will contain the music pattern inserted by the user */
-let melody;
-
-let stave;
-let context;
-let renderer;
-
-let pentagram_width;
-let pentagram_height;
+const staveRepr = new StaveRepresentation();
+const player = new Player();
 
 let pianoKeys;
 let volumeSlider;
 let keysCheckbox;
 let selectedCollection;
 
-let pentagram;
-let pentagram_svg;
-
 let volume = 0.5;
 
-/** Used to store the notes played when pressed with the computer keyboard. */
+/** Stores the notes played when pressed with the computer keyboard. */
 var currently_played_notes = {}
-var currently_played_notes_playback = {}
+// var currently_played_notes_playback = {}
 
 /** Store the current octave (in [1 ; 6]) */
 var octave = 4;
 
-/** Store when the user plays the melody */
-var is_playing = false;
-
-/** Used as a flag to stop the melody from playing */
-var stop_melody = false;
-
 
 //============================= Global constants =============================//
-const init_pentagram_width = 450;
-
 /*
   const durationNote = {
     '32': 0.125, //1/32
@@ -160,16 +141,16 @@ async function createQuery(ignore_pitch=false, ignore_octave=false, ignore_rhyth
     //------Create the `notes` for the python script
     
     let notes = '[';
-    for (let k = 0 ; k < melody.length ; ++k) {
+    for (let k = 0 ; k < staveRepr.melody.length ; ++k) {
         notes += '[';
 
-        for (let note_idx = 0 ; note_idx < melody[k].keys.length ; ++note_idx) {
-            let note = melody[k].keys[note_idx];
+        for (let note_idx = 0 ; note_idx < staveRepr.melody[k].keys.length ; ++note_idx) {
+            let note = staveRepr.melody[k].keys[note_idx];
 
             //---Add note class ('a', 'gs', ...)
             if (ignore_pitch /*&& !contour_match*/)
                 notes += '(None, ';
-            else if (melody[k].noteType == 'r') // rest
+            else if (staveRepr.melody[k].noteType == 'r') // rest
                 notes += "('r', ";
             else {
                 let class_ = note.split('/')[0];
@@ -178,7 +159,7 @@ async function createQuery(ignore_pitch=false, ignore_octave=false, ignore_rhyth
             }
 
             //---Add octave
-            if ((ignore_octave || melody[k].noteType == 'r') /*&& !contour_match*/)
+            if ((ignore_octave || staveRepr.melody[k].noteType == 'r') /*&& !contour_match*/)
                 notes += 'None), ';
             else {
                 let octave = note.split('/')[1];
@@ -190,12 +171,12 @@ async function createQuery(ignore_pitch=false, ignore_octave=false, ignore_rhyth
         if (ignore_rhythm)
             notes += 'None], ';
         else {
-            let duration_string = melody[k].dots > 0 ? melody[k].duration + 'd' : melody[k].duration; //TODO: will not work for multi-dots
+            let duration_string = staveRepr.melody[k].dots > 0 ? staveRepr.melody[k].duration + 'd' : staveRepr.melody[k].duration; //TODO: will not work for multi-dots
             // let dur_inv = 1 / durationNoteWithDots[duration_string];
 
-            // let duration_dur = melody[k].dots > 0 ? `${1 / melody[k].duration}, 1` : `${1 / melody[k].duration}`;
-            let dur = 1 / durationNote[melody[k].duration];
-            if(melody[k].dots > 0){
+            // let duration_dur = staveRepr.melody[k].dots > 0 ? `${1 / staveRepr.melody[k].duration}, 1` : `${1 / staveRepr.melody[k].duration}`;
+            let dur = 1 / durationNote[staveRepr.melody[k].duration];
+            if(staveRepr.melody[k].dots > 0){
                 dur += `, 1`
             }
             notes += `${dur}], `;
@@ -277,43 +258,6 @@ function sendQuery(fuzzyQuery) {
 
 //========= Handler functions =========//
 /**
- * Remove from the melody array all the inserted note and clear the stave as well
- */
-const clear_all_pattern = () => {
-    melody = [];
-
-    // Cancel the previous pentagram
-    pentagram_svg = document.querySelector("#music-score svg");
-    while (pentagram_svg.firstChild) {
-        pentagram_svg.removeChild(pentagram_svg.firstChild);
-    }
-    stave.setContext(context).draw();
-
-    resizeStave();
-}
-
-/**
- * Remove from the melody array the last inserted note and re-draw the pentagram
- */
-const remove_last_note = () => {
-    melody.pop();
-
-    // Cancel the previous pentagram
-    pentagram_svg = document.querySelector("#music-score svg");
-    while (pentagram_svg.firstChild) {
-        pentagram_svg.removeChild(pentagram_svg.firstChild);
-    }
-    stave.setContext(context).draw();
-
-    // Re-draw the pentagram
-    melody.forEach((note) => {
-        note.setContext(context).draw();
-    });
-
-    resizeStave();
-}
-
-/**
  * Handle the research action (called with button or enter).
  * If the button is pressed (or enter pressed), we check which one of the radio
  * buttons has been selected and we call the corresponding function to create
@@ -336,7 +280,7 @@ const searchButtonHandler = function() {
     //const contour_cb = document.getElementById('contour-cb');
 
     // Check that melody is not empty
-    if (melody.length == 0) {
+    if (staveRepr.melody.length == 0) {
         alert('Stave is empty !\nPlease enter some notes to search for.');
         return;
     }
@@ -346,7 +290,7 @@ const searchButtonHandler = function() {
         return;
     }
 
-    if ((transposition_cb.checked /*|| contour_cb.checked*/) && melody.length == 1) {
+    if ((transposition_cb.checked /*|| contour_cb.checked*/) && staveRepr.melody.length == 1) {
         alert('For transposition and contour search, at least two notes are needed (because it is based on interval between notes).');
         return;
     }
@@ -374,8 +318,6 @@ const searchButtonHandler = function() {
     // Sélectionne le container qui doit être affiché après la recherche
     const resultsContainer = document.querySelector(".container_2");
     resultsContainer.style.display = "flex";
-
-
 }
 
 /**
@@ -435,80 +377,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
 /**
  * This function increases/decreases the volume according to the user input
- * */
+ */
 const handleVolume = (e) => {
     volume = e.target.value; // passing the range slider value as an audio volume
 }
 
 /**
  * This function hides/shows the keys for the buttons according to the user input
- * */
+ */
 const showHideKeys = () => {
     // toggling hide class from each key on the checkbox click
     pianoKeys.forEach(key => key.classList.toggle("hide"));
-}
-
-/**
- * Plays the sound of the button that has been pressed
- *
- * @param {string} note - the note to play (format example : C#4, C4)
- * @param {Audio} [audio=null] - if not null, use this audio to make the sound.
- * */
-const playTune = (note, audio=null) => {
-    if (note == 'r')
-        return;
-
-    if (audio == null) {
-        currently_played_notes_playback[note] = {audio: new Audio()};
-        audio = currently_played_notes_playback[note].audio;
-    }
-
-    let key = note.replace('#', 's');
-
-    if (key.includes('s')) { // convert sharp to flat
-        const Notes = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
-
-        for (let k = 0 ; k < Notes.length ; ++k) {
-            if (key[0] == Notes[k]) {
-                key = key.replace(Notes[k], Notes[(k + 1) % Notes.length]);
-                key = key.replace('s', 'b');
-                break;
-            }
-        }
-    }
-
-    audio.volume = volume;
-    audio.src = `acoustic_grand_piano-mp3/${key}.mp3`;
-
-    audio.play();
-}
-
-/**
- * Stops the sound for the given note, with a fade out.
- *
- * @param {string} note - the note to stop playing (format example : C#/4, C/4)
- * @param {Audio} [audio=null] - if not null, use this audio to stop the sound.
- */
-const stopTune = (note, audio=null) => {
-    if (note == 'r')
-        return;
-
-    let note_arr = note.replace('/', '');
-
-    if (audio == null) {
-        audio = currently_played_notes_playback[note_arr].audio;
-        delete currently_played_notes_playback[note_arr];
-    }
-
-    var fadeAudio = setInterval(function() {
-        if (audio.volume > 0) {
-            audio.volume -= 1/8;
-        }
-        else {
-            clearInterval(fadeAudio);
-            audio.pause();
-        }
-    }, 30);
 }
 
 /**
@@ -602,84 +481,6 @@ function hideTooltip() {
 }
 
 /**
- * Plays a note and stop after the given rhythm.
- *
- * @param {string} note - the note (pitch) to play (e.g C#/4) ;
- * @param {string} rhythm - the rhythm of the note (e.g h, 8d, ...)
- */
-function playNoteWithRhythm(note, rhythm) {
-    let audio = new Audio();
-
-    playTune(note, audio);
-
-    // let audio = currently_played_notes_playback[note].audio;
-
-    var stopAudio = setInterval(function() {
-        if (audio.currentTime >= 2 * durationNoteWithDots[rhythm]) {
-            clearInterval(stopAudio);
-            stopTune(note, audio);
-        }
-    }, 1)
-}
-
-/**
- * Wait `ms` ms.
- *
- * @param {number} ms - the time to wait, in ms.
- */
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * Plays / stop the melody from the `melody` global array.
- *
- * If the melody is already playing, it stops it. Otherwise, it plays it.
- */
-async function playMelody() {
-    for (let k = 0 ; k < melody.length ; ++k) {
-        if (!stop_melody) {
-            let duration = melody[k].dots > 0 ? melody[k].duration + 'd' : melody[k].duration;
-
-            if (melody[k].noteType == 'r')
-                playNoteWithRhythm('r')
-            else
-                melody[k].keys.forEach((key) => {playNoteWithRhythm(key.replace('/', ''), duration)}); // Play chord (or just one note)
-
-            await sleep(1000 * durationNoteWithDots[duration]);
-        }
-        else {
-            stop_melody = false;
-            break;
-        }
-    }
-}
-
-/**
- * Plays the melody if it not currently playing.
- * Otherwise stop it.
- */
-async function playMelodyBtHandler() {
-    const play_bt = document.getElementById('play_melody');
-
-    if (!is_playing) {
-        is_playing = true;
-        // play_bt.disabled = true;
-        play_bt.innerText = 'Arrêter la mélodie';
-        play_bt.style.backgroundColor = 'red';
-
-        await playMelody();
-
-        is_playing = false;
-        // play_bt.disabled = false;
-        play_bt.innerText = 'Jouer la mélodie';
-        play_bt.style.backgroundColor = '#62aadd';
-    }
-    else
-        stop_melody = true;
-}
-
-/**
  * Manages when a piano key is pressed down.
  *
  * It starts a timer and plays the note.
@@ -693,7 +494,7 @@ function keyDown(note, key_id=null) {
     currently_played_notes[note] = {start: new Date()};
 
     if (note != 'r') // silence
-        playTune(note);
+        player.playTune(note);
 
     // Set key as selected in the html
     if (key_id == null || note == 'r')
@@ -726,7 +527,7 @@ function keyUp(note, key_id=null) {
     clickedKey.classList.remove("active"); 
 
     // Stop the playing sound
-    stopTune(note_arr)
+    player.stopTune(note_arr)
 
     // Calculate duration
     let elapsed = (new Date() - currently_played_notes[note_arr].start) / 1000;
@@ -744,7 +545,7 @@ function keyUp(note, key_id=null) {
             }
         }
     }
-    else // If the duration is longer than the longer note, just add the longer note.
+    else // If the duration is longer than the longest note, just add the longest note.
         duration = sortedKeys[sortedKeys.length - 1];
 
     if (Object.keys(currently_played_notes).length > 1)
@@ -770,7 +571,7 @@ function keyUp(note, key_id=null) {
     }
 
     // Display the note
-    displayNote(note, keys, duration);
+    staveRepr.displayNote(note, keys, duration);
 }
 
 /**
@@ -792,11 +593,11 @@ function keyListener(event) {
     //------Select the action corresponding to the key
     //---Delete all
     if (event.type == 'keydown' && event.key == 'Backspace' && event.ctrlKey)
-        clear_all_pattern();
+        staveRepr.clear_all_pattern();
 
     //---Delete last note
     else if (event.type == 'keydown' && event.key == 'Backspace')
-        remove_last_note();
+        staveRepr.remove_last_note();
 
     //---Change octave
     else if (event.type == 'keydown' && (event.key == '-' || event.key == '+' || event.key == 'c' || event.key == 'v')) {
@@ -842,18 +643,10 @@ function keyListener(event) {
  */
 function manageOptions() {
     const searchButton = document.querySelectorAll(".send-button"); // Search button // original -> document.getElementById("send-button")
-    const clearAllButton = document.getElementById("clear_all");
-    const clearLastNoteButton = document.getElementById("clear_last_note");
-    const playBt = document.getElementById('play_melody');
     const pitch_cb = document.getElementById('pitch-cb');
     const rhythm_cb = document.getElementById('rhythm-cb');
     const transpose_cb = document.getElementById('transpose-cb');
     //const contour_cb = document.getElementById('contour-cb');
-
-    // Add an event listener for the clear-buttons to call the corresponding method
-    clearAllButton.addEventListener('click', clear_all_pattern);
-    clearLastNoteButton.addEventListener('click', remove_last_note);
-    playBt.addEventListener('click', playMelodyBtHandler);
 
     // Add an event listener for the 'search' button
     //searchButton.addEventListener('click', searchButtonHandler); -> is original for 1 button use
@@ -1009,24 +802,12 @@ function manageStaveAndMelody() {
     silenceBt.addEventListener('mousedown', () => keyDown('r'));
     silenceBt.addEventListener('mouseup', () => keyUp('r'));
 
+    const clearAllButton = document.getElementById("clear_all");
+    const clearLastNoteButton = document.getElementById("clear_last_note");
+    const playBt = document.getElementById('play_melody');
 
-    /* global VexFlow */
-    VexFlow.loadFonts('Bravura', 'Academico').then(() => {
-        VexFlow.setFonts('Bravura', 'Academico');
-        // Create an SVG renderer and attach it to the pentagram
-        renderer = new Renderer(pentagram, Renderer.Backends.SVG);
+    staveRepr.init(player, playBt, clearAllButton, clearLastNoteButton);
 
-        // Configure the rendering context
-        renderer.resize(pentagram_width, pentagram_height);
-        context = renderer.getContext();
-        context.setFont('Arial', 10);
-
-        // Finally create the stave with the treble symbol and draw it
-        stave = new Stave(10, 40, pentagram_width);
-        stave.addClef("treble");
-        stave.setContext(context).draw();
-    });
-    
     // The following code manages what to do when the buttons of the piano are pressed
     keysCheckbox.addEventListener("click", showHideKeys);
     volumeSlider.addEventListener("input", handleVolume);
@@ -1057,17 +838,17 @@ function manageStaveAndMelody() {
     });
 
     // Connect rhythm note keys
-    document.getElementById('whole-bt').addEventListener('mousedown', () => changeLastNoteRhythm('w'));
-    document.getElementById('half-dotted-bt').addEventListener('mousedown', () => changeLastNoteRhythm('hd'));
-    document.getElementById('half-bt').addEventListener('mousedown', () => changeLastNoteRhythm('h'));
-    document.getElementById('quarter-dotted-bt').addEventListener('mousedown', () => changeLastNoteRhythm('qd'));
-    document.getElementById('quarter-bt').addEventListener('mousedown', () => changeLastNoteRhythm('q'));
-    document.getElementById('8th-dotted-bt').addEventListener('mousedown', () => changeLastNoteRhythm('8d'));
-    document.getElementById('8th-bt').addEventListener('mousedown', () => changeLastNoteRhythm('8'));
-    document.getElementById('16th-dotted-bt').addEventListener('mousedown', () => changeLastNoteRhythm('16d'));
-    document.getElementById('16th-bt').addEventListener('mousedown', () => changeLastNoteRhythm('16'));
-    document.getElementById('32th-dotted-bt').addEventListener('mousedown', () => changeLastNoteRhythm('32d'));
-    document.getElementById('32th-bt').addEventListener('mousedown', () => changeLastNoteRhythm('32'));
+    document.getElementById('whole-bt').addEventListener('mousedown', () => staveRepr.changeLastNoteRhythm('w'));
+    document.getElementById('half-dotted-bt').addEventListener('mousedown', () => staveRepr.changeLastNoteRhythm('hd'));
+    document.getElementById('half-bt').addEventListener('mousedown', () => staveRepr.changeLastNoteRhythm('h'));
+    document.getElementById('quarter-dotted-bt').addEventListener('mousedown', () => staveRepr.changeLastNoteRhythm('qd'));
+    document.getElementById('quarter-bt').addEventListener('mousedown', () => staveRepr.changeLastNoteRhythm('q'));
+    document.getElementById('8th-dotted-bt').addEventListener('mousedown', () => staveRepr.changeLastNoteRhythm('8d'));
+    document.getElementById('8th-bt').addEventListener('mousedown', () => staveRepr.changeLastNoteRhythm('8'));
+    document.getElementById('16th-dotted-bt').addEventListener('mousedown', () => staveRepr.changeLastNoteRhythm('16d'));
+    document.getElementById('16th-bt').addEventListener('mousedown', () => staveRepr.changeLastNoteRhythm('16'));
+    document.getElementById('32th-dotted-bt').addEventListener('mousedown', () => staveRepr.changeLastNoteRhythm('32d'));
+    document.getElementById('32th-bt').addEventListener('mousedown', () => staveRepr.changeLastNoteRhythm('32'));
 
     document.getElementById('octave-minus').addEventListener('mousedown', () => changeOctave(-1));
     document.getElementById('octave-plus').addEventListener('mousedown', () => changeOctave(1));
@@ -1088,101 +869,6 @@ function manageCollections() {
         // Update the global variable to reflect the newly selected collection
         selectedCollection = selectedOption.value;
     });
-}
-
-/**
- * Displays the note to the stave and add it to `melody`.
- *
- * @param {string} note - the note name (e.g C/5, C#/4, with the '/') ;
- * @param {string[]} keys - array of keys ;
- * @param {string} duration - the note duration (w, h, q, 8, 16, 32, hd, qd, 8d, 16d, 32d).
- */
-function displayNote(note, keys, duration) {
-    let display_note;
-    if (note == 'r') {
-        display_note = new StaveNote({
-            keys: ['B/4'], // just for middle height
-            type: 'r', // rest
-            duration: duration,
-        });
-    }
-    else {
-        display_note = new StaveNote({
-            keys: keys,
-            duration: duration,
-            clef: 'treble',
-            auto_stem: true
-        });
-    }
-
-    if (note.includes('#'))
-        display_note.addModifier(new Accidental("#"), 0);
-
-    if (duration.includes('d'))
-        // display_note.addModifier(new Dot(), 0);
-        Dot.buildAndAttach([display_note], {all: true});
-
-    melody.push(display_note);
-
-    // Format stave and all notes
-    Formatter.FormatAndDraw(context, stave, melody);
-
-    resizeStave();
-}
-
-
-/**
- * Resizes the stave width, according to the notes in the melody.
- * Ensures that the minimal width is respected (`init_pentagram_width`).
- */
-function resizeStave() {
-    let totalWidth = 0;
-    melody.forEach((note) => {
-        totalWidth += note.getWidth() + 5;
-    });
-
-    totalWidth = Math.max(totalWidth, init_pentagram_width);
-
-    // If the new width is greater or smaller than the initial width, update stave width and pentagran_width variable
-    if (totalWidth > pentagram_width || totalWidth < pentagram_width) {
-        stave.setWidth(totalWidth + 100);
-        renderer.resize(totalWidth + 100, pentagram_height)
-        pentagram_width = totalWidth;
-    }
-
-    // Cancel the previous pentagram
-    const svg = document.querySelector("#music-score svg");
-    while (svg.firstChild) {
-        svg.removeChild(svg.firstChild);
-    }
-    stave.setContext(context).draw();
-
-    // Re-draw it
-    melody.forEach((note) => {
-        note.setContext(context).draw();
-    });
-}
-
-/**
- * Changes the last note on the stave for one with the same pitch, but with a different rhythm.
- *
- * @param {*} newRhythm - the new wanted rhythm.
- */
-function changeLastNoteRhythm(newRhythm) {
-    // If there is no note to modify, abort
-    if (melody.length == 0)
-        return;
-
-    // Remove last note
-    let last_note = melody.slice(-1)[0];
-    let note = last_note.keys[0];
-    if (last_note.noteType == 'r')
-        note = 'r';
-
-    remove_last_note();
-
-    // Add the note with the new rhythm
-    displayNote(note, last_note.keys, newRhythm);
 }
 
 /**
@@ -1237,16 +923,7 @@ function initTooltips() {
  * Initialize all the variables and the Vexflow pentagram
  * */
 function init() {
-    melody = [];
     selectedCollection = null;
-
-    stave = null;
-    context = null;
-    renderer = null;
-
-    pentagram_width = 450;
-    pentagram_height = 200;
-    pentagram = document.getElementById("music-score");
 
     pianoKeys = document.querySelectorAll(".piano-keys .key"),
         volumeSlider = document.querySelector(".volume-slider input"),
@@ -1265,113 +942,115 @@ function init() {
     matchPicthCbHandler(); // Disable options that should be
     matchRhythmCbHandler();
     //contourAndTranspositionHandler(null);
-}
-  
-/**
- * MESSAGE TOAST BUTTON PRESET --------- PENSER A AJOUTER LA LOGIQUE TRANSPOSITION SINON MESSAGE
- */
-const toastTrigger1 = document.getElementById('stricte');
-const toastTrigger2 = document.getElementById('modereeMelo');
-const toastTrigger3 = document.getElementById('modereeRythm');
-const toastLiveExample1 = document.getElementById('liveToast1');
-const toastLiveExample2 = document.getElementById('liveToast2');
-const toastLiveExample3 = document.getElementById('liveToast3');
 
-// Show function 1
-if (toastTrigger1) {
-    const toastBootstrap1 = bootstrap.Toast.getOrCreateInstance(toastLiveExample1, { delay: 15000 }); // 5 secondes
-    toastTrigger1.addEventListener('click', () => {
-        toastBootstrap1.show();
 
-        if (melody.length === 0) {
-            toastBootstrap1.hide();  // Si les entrées sont incorrectes, cache le toast
-        } else {
-            toastBootstrap1.show();  // Si tout est ok, affiche le toast
+    /**
+     * MESSAGE TOAST BUTTON PRESET --------- PENSER A AJOUTER LA LOGIQUE TRANSPOSITION SINON MESSAGE
+     */
+    const toastTrigger1 = document.getElementById('stricte');
+    const toastTrigger2 = document.getElementById('modereeMelo');
+    const toastTrigger3 = document.getElementById('modereeRythm');
+    const toastLiveExample1 = document.getElementById('liveToast1');
+    const toastLiveExample2 = document.getElementById('liveToast2');
+    const toastLiveExample3 = document.getElementById('liveToast3');
 
-            // Hide function 2
-            if (toastLiveExample2) {
-                const toastBootstrap2 = bootstrap.Toast.getOrCreateInstance(toastLiveExample2);
-                toastBootstrap2.hide();
+    // Show function 1
+    if (toastTrigger1) {
+        const toastBootstrap1 = bootstrap.Toast.getOrCreateInstance(toastLiveExample1, { delay: 15000 }); // 5 secondes
+        toastTrigger1.addEventListener('click', () => {
+            toastBootstrap1.show();
+
+            if (staveRepr.melody.length === 0) {
+                toastBootstrap1.hide();  // Si les entrées sont incorrectes, cache le toast
+            } else {
+                toastBootstrap1.show();  // Si tout est ok, affiche le toast
+
+                // Hide function 2
+                if (toastLiveExample2) {
+                    const toastBootstrap2 = bootstrap.Toast.getOrCreateInstance(toastLiveExample2);
+                    toastBootstrap2.hide();
+                }
+
+                // Hide function 3
+                if (toastLiveExample3) {
+                    const toastBootstrap3 = bootstrap.Toast.getOrCreateInstance(toastLiveExample3);
+                    toastBootstrap3.hide();
+                }
             }
-
-            // Hide function 3
-            if (toastLiveExample3) {
-                const toastBootstrap3 = bootstrap.Toast.getOrCreateInstance(toastLiveExample3);
-                toastBootstrap3.hide();
-            }
-        }
-    });
-}
-
-// Show function 2
-if (toastTrigger2) {
-    const toastBootstrap2 = bootstrap.Toast.getOrCreateInstance(toastLiveExample2, { delay: 15000 }); // 5 secondes
-    toastTrigger2.addEventListener('click', () => {
-        toastBootstrap2.show();
-
-        if (melody.length === 0) {
-            toastBootstrap2.hide();  // Si les entrées sont incorrectes, cache le toast
-        } else {
-            toastBootstrap2.show();  // Si tout est ok, affiche le toast
-
-            // Hide function 1
-            if (toastLiveExample1) {
-                const toastBootstrap1 = bootstrap.Toast.getOrCreateInstance(toastLiveExample1);
-                toastBootstrap1.hide();
-            }
-
-            // Hide function 3
-            if (toastLiveExample3) {
-                const toastBootstrap3 = bootstrap.Toast.getOrCreateInstance(toastLiveExample3);
-                toastBootstrap3.hide();
-            }
-        }
-    });
-
-}
-
-// Show function 3
-if (toastTrigger3) {
-    const toastBootstrap3 = bootstrap.Toast.getOrCreateInstance(toastLiveExample3, { delay: 15000 }); // 5 secondes
-    toastTrigger3.addEventListener('click', () => {
-        toastBootstrap3.show();
-
-        if (melody.length === 0) {
-            toastBootstrap3.hide();  // Si les entrées sont incorrectes, cache le toast
-        } else {
-            toastBootstrap3.show();  // Si tout est ok, affiche le toast
-
-            // Hide function 2
-            if (toastLiveExample2) {
-                const toastBootstrap2 = bootstrap.Toast.getOrCreateInstance(toastLiveExample2);
-                toastBootstrap2.hide();
-            }
-
-            // Hide function 1
-            if (toastLiveExample1) {
-                const toastBootstrap1 = bootstrap.Toast.getOrCreateInstance(toastLiveExample1);
-                toastBootstrap1.hide();
-            }
-        }
-    });
-}
-
-/**
- * Toast Help button
- */
-document.addEventListener("DOMContentLoaded", function () {
-    var toastEl = document.querySelector('.toast');
-    var toast = new bootstrap.Toast(toastEl);
-    setTimeout(() => toast.show(), 2000); // S'affiche après 2 secondes
-  });
-
-/**
- * lock del/supp only in fuzzy-options
- */
-document.querySelectorAll('.fuzzy-options input').forEach(input => {
-input.addEventListener('keydown', (event) => {
-    if (event.key === 'Delete' || event.key === 'Backspace') {
-    event.stopPropagation();
+        });
     }
-});
-});
+
+    // Show function 2
+    if (toastTrigger2) {
+        const toastBootstrap2 = bootstrap.Toast.getOrCreateInstance(toastLiveExample2, { delay: 15000 }); // 5 secondes
+        toastTrigger2.addEventListener('click', () => {
+            toastBootstrap2.show();
+
+            if (staveRepr.melody.length === 0) {
+                toastBootstrap2.hide();  // Si les entrées sont incorrectes, cache le toast
+            } else {
+                toastBootstrap2.show();  // Si tout est ok, affiche le toast
+
+                // Hide function 1
+                if (toastLiveExample1) {
+                    const toastBootstrap1 = bootstrap.Toast.getOrCreateInstance(toastLiveExample1);
+                    toastBootstrap1.hide();
+                }
+
+                // Hide function 3
+                if (toastLiveExample3) {
+                    const toastBootstrap3 = bootstrap.Toast.getOrCreateInstance(toastLiveExample3);
+                    toastBootstrap3.hide();
+                }
+            }
+        });
+
+    }
+
+    // Show function 3
+    if (toastTrigger3) {
+        const toastBootstrap3 = bootstrap.Toast.getOrCreateInstance(toastLiveExample3, { delay: 15000 }); // 5 secondes
+        toastTrigger3.addEventListener('click', () => {
+            toastBootstrap3.show();
+
+            if (staveRepr.melody.length === 0) {
+                toastBootstrap3.hide();  // Si les entrées sont incorrectes, cache le toast
+            } else {
+                toastBootstrap3.show();  // Si tout est ok, affiche le toast
+
+                // Hide function 2
+                if (toastLiveExample2) {
+                    const toastBootstrap2 = bootstrap.Toast.getOrCreateInstance(toastLiveExample2);
+                    toastBootstrap2.hide();
+                }
+
+                // Hide function 1
+                if (toastLiveExample1) {
+                    const toastBootstrap1 = bootstrap.Toast.getOrCreateInstance(toastLiveExample1);
+                    toastBootstrap1.hide();
+                }
+            }
+        });
+    }
+
+    /**
+     * Toast Help button
+     */
+    document.addEventListener("DOMContentLoaded", function () {
+        var toastEl = document.querySelector('.toast');
+        var toast = new bootstrap.Toast(toastEl);
+        setTimeout(() => toast.show(), 2000); // S'affiche après 2 secondes
+      });
+
+    /**
+     * lock del/supp only in fuzzy-options
+     */
+    document.querySelectorAll('.fuzzy-options input').forEach(input => {
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Delete' || event.key === 'Backspace') {
+            event.stopPropagation();
+            }
+        });
+    });
+}
+
