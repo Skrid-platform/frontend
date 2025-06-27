@@ -149,9 +149,11 @@ class StaveRepresentation {
         if (note.includes('#'))
             display_note.addModifier(new Accidental("#"), 0);
 
-        if (duration.includes('d'))
+        if (duration.includes('d')) {
             // display_note.addModifier(new Dot(), 0);
+            display_note.dots = 1;
             Dot.buildAndAttach([display_note], {all: true});
+        }
 
         this.melody.push(display_note);
 

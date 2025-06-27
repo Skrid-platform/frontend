@@ -144,6 +144,7 @@ async function createQuery(ignore_pitch=false, ignore_octave=false, ignore_rhyth
     for (let k = 0 ; k < staveRepr.melody.length ; ++k) {
         notes += '[';
 
+        //---Add pitch (class + octave)
         for (let note_idx = 0 ; note_idx < staveRepr.melody[k].keys.length ; ++note_idx) {
             let note = staveRepr.melody[k].keys[note_idx];
 
