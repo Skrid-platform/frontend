@@ -117,8 +117,9 @@ const qwerty_us_to_azerty = {
 /**
  * Uses `melody` to create an input of the following format for the python script (write mode) :
  * ```
- * [(class|None, octave|None, duration|None), ...]
+ * [([note1|None, ...], duration|None, dots)]
  * ```
+ * where `note1` is in the following format: 'c#/5'.
  *
  * It then fetches the python script and returns the fuzzy query.
  *
@@ -130,7 +131,6 @@ const qwerty_us_to_azerty = {
  * @param {number}  [duration_gap=0]            - the duration gap (fuzzy param) ;
  * @param {number}  [alpha=0]                   - (in [0 ; 1]) will remove every result whose score is below `alpha` (fuzzy param) ;
  * @param {boolean} [allow_transposition=false] - allow transposition (fuzzy param) ;
- * @param {boolean} //[contour_match=false]       - match only contour (fuzzy param) ;
  *
  * @returns {promise} the fuzzy query corresponding to the parameters
  *
@@ -139,51 +139,34 @@ const qwerty_us_to_azerty = {
  */
 async function createQuery(ignore_pitch=false, ignore_octave=false, ignore_rhythm=false, pitch_dist=0, duration_factor=1, duration_gap=0, alpha=0, allow_transposition=false, allow_homothety=false, incipit_only=false /*contour_match=false*/) {
     //------Create the `notes` for the python script
-    
     let notes = '[';
     for (let k = 0 ; k < staveRepr.melody.length ; ++k) {
-        notes += '[';
+        notes += '([';
 
         //---Add pitch (class + octave)
         for (let note_idx = 0 ; note_idx < staveRepr.melody[k].keys.length ; ++note_idx) {
             let note = staveRepr.melody[k].keys[note_idx];
 
             //---Add note class ('a', 'gs', ...)
-            if (ignore_pitch /*&& !contour_match*/)
-                notes += '(None, ';
+            if (ignore_pitch)
+                notes += 'None, ';
             else if (staveRepr.melody[k].noteType == 'r') // rest
-                notes += "('r', ";
-            else {
-                let class_ = note.split('/')[0];
-                class_ = class_.toLowerCase().replace('#', 's');
-                notes += `('${class_}', `
-            }
-
-            //---Add octave
-            if ((ignore_octave || staveRepr.melody[k].noteType == 'r') /*&& !contour_match*/)
-                notes += 'None), ';
-            else {
-                let octave = note.split('/')[1];
-                notes += `${octave}), `;
-            }
+                notes += "'r', ";
+            else
+                notes += `'${note}', `
         }
+        notes = notes.slice(0, -2) + '], '; // Remove trailing ', '
 
         //---Add duration
         if (ignore_rhythm)
-            notes += 'None], ';
+            notes += 'None, 0), ';
         else {
-            let duration_string = staveRepr.melody[k].dots > 0 ? staveRepr.melody[k].duration + 'd' : staveRepr.melody[k].duration; //TODO: will not work for multi-dots
-            // let dur_inv = 1 / durationNoteWithDots[duration_string];
-
-            // let duration_dur = staveRepr.melody[k].dots > 0 ? `${1 / staveRepr.melody[k].duration}, 1` : `${1 / staveRepr.melody[k].duration}`;
             let dur = 1 / durationNote[staveRepr.melody[k].duration];
-            if(staveRepr.melody[k].dots > 0){
-                dur += `, 1`
-            }
-            notes += `${dur}], `;
+            let dots = staveRepr.melody[k].dots || 0;
+
+            notes += `${dur}, ${dots}), `;
         }
     }
-
     notes = notes.slice(0, -2) + ']' // Remove trailing ', ' and add ']'.
 
     //------Use the python script to get a fuzzy query
