@@ -5,7 +5,7 @@
  */
 
 //====== Imports ======//
-const { Renderer, Stave, Formatter, StaveNote, Accidental, Dot} = VexFlow;
+import { Renderer, Stave, Formatter, StaveNote, Accidental, Dot} from 'vexflow';
 
 
 //====== Constants ======//

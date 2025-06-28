@@ -4,7 +4,9 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import staveRepresentation from "@/lib/stave.js";
+
 defineOptions({
     name: "Stave"
 })
