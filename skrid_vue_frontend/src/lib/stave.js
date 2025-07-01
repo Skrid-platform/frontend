@@ -5,27 +5,8 @@
  */
 
 //====== Imports ======//
-import { Renderer, Stave, Formatter, StaveNote, Accidental, Dot} from 'vexflow';
+import { Renderer, Stave, Formatter, StaveNote, Accidental, Dot } from 'vexflow';
 
-
-//====== Constants ======//
-/** All the possible durations for a note */
-const durationNoteWithDots = {
-    '32': 1/32,         // thirty-second (triple croche)
-    '32d': 1/32 + 1/64, // dotted thirty-second (triple croche pointée)
-    '16': 1/16,         // sixteenth (double croche)
-    '16d': 1/16 + 1/32, // dotted sixteenth (double croche pointée)
-    '8': 1/8,           // eighth (croche)
-    '8d': 1/8 + 1/16,   // dotted eighth (croche pointée)
-    'q': 1/4,           // (quarter)
-    'qd': 1/4 + 1/8,    // (dotted quarter)
-    'h': 1/2,           // (half)
-    'hd': .5 + .25,     // (dotted half)
-    'w': 1              // (whole)
-};
-
-
-//====== Classes ======//
 /**
  * Class defining the vexflow stave used to display the notes from the piano
  */
@@ -67,22 +48,20 @@ class StaveRepresentation {
     init(player, playBt, clearAllButton, clearLastNoteButton) {
         this.#html_elem = document.getElementById('music-score');
 
-        /* global VexFlow */
-        VexFlow.loadFonts('Bravura', 'Academico').then(() => {
-            VexFlow.setFonts('Bravura', 'Academico');
-            // Create an SVG renderer and attach it to the pentagram
-            this.#renderer = new Renderer(this.#html_elem, Renderer.Backends.SVG);
 
-            // Configure the rendering context
-            this.#renderer.resize(this.#width, this.#height);
-            this.#context = this.#renderer.getContext();
-            this.#context.setFont('Arial', 10);
+        // Create an SVG renderer and attach it to the pentagram
+        this.#renderer = new Renderer(this.#html_elem, Renderer.Backends.SVG);
 
-            // Finally create the stave with the treble symbol and draw it
-            this.#stave = new Stave(10, 40, this.#width);
-            this.#stave.addClef("treble");
-            this.#stave.setContext(this.#context).draw();
-        });
+        // Configure the rendering context
+        this.#renderer.resize(this.#width, this.#height);
+        this.#context = this.#renderer.getContext();
+        this.#context.setFont('Arial', 10);
+
+        // Finally create the stave with the treble symbol and draw it
+        this.#stave = new Stave(10, 40, this.#width);
+        this.#stave.addClef("treble");
+        this.#stave.setContext(this.#context).draw();
+
 
         playBt.addEventListener('click', () => player.playMelodyBtHandler(playBt, this.melody));
         clearAllButton.addEventListener('click', () => this.clear_all_pattern());
@@ -151,7 +130,7 @@ class StaveRepresentation {
 
         if (duration.includes('d'))
             // display_note.addModifier(new Dot(), 0);
-            Dot.buildAndAttach([display_note], {all: true});
+            Dot.buildAndAttach([display_note], { all: true });
 
         this.melody.push(display_note);
 

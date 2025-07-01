@@ -1,7 +1,11 @@
 <template>
   <div class="wrapper">
     <header>
-      <div class="column volume-slider"><span>Volume</span><input type="range" min="0" max="1" value="0.5" step="any" /></div>
+      <div class="column volume-slider">
+        <span>Volume</span>
+        <input v-model="volume" type="range" min="0" max="1" value="0.5" step="any" />
+      </div>
+
       <div class="octave-modif">
         <div class="octave-modif-bt-div">
           <button class="btn btn-outline-secondary text-white octave-modif-bt" data-key="<" id="octave-minus">
@@ -13,7 +17,7 @@
         </div>
         <label id="octave-lb" class="white-label">4</label>
       </div>
-      <div class="column keys-checkbox"><span>Touches</span><input type="checkbox" checked /></div>
+      <div class="column keys-checkbox"><span>Touches</span><input type="checkbox" checked @click="showHideKeys()" /></div>
     </header>
     <ul class="piano-keys">
       <li class="key white" data-key="C4">
@@ -227,9 +231,25 @@
 </template>
 
 <script setup>
+
+
+import { ref } from 'vue';
+
 defineOptions({
   name: 'Clavier',
 });
+
+const volume = ref(0.5);
+
+/**
+ * This function hides/shows the keys for the buttons according to the user input
+ */
+const showHideKeys = () => {
+  // getting all the piano keys
+  const pianoKeys = document.querySelectorAll('.piano-keys .key');
+  // toggling hide class from each key on the checkbox click
+  pianoKeys.forEach((key) => key.classList.toggle('hide'));
+};
 </script>
 
 <style scoped>
@@ -239,19 +259,33 @@ defineOptions({
   border-radius: 20px;
   background: #141414;
 }
+
+.wrapper header {
+  display: flex;
+  color: #b2b2b2;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .volume-slider input {
   accent-color: #fff;
 }
+
+header input {
+  outline: none;
+  border-radius: 30px;
+}
+
 .keys-checkbox input {
   height: 30px;
   width: 60px;
   cursor: pointer;
   appearance: none;
   position: relative;
-  background: #4B4B4B
+  background: #4b4b4b;
 }
 .keys-checkbox input::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 50%;
   left: 5px;
@@ -277,7 +311,7 @@ defineOptions({
   user-select: none;
   position: relative;
   text-transform: uppercase;
-  writing-mode:sideways-lr;
+  writing-mode: sideways-lr;
 }
 #silence-bt {
   cursor: pointer;
@@ -292,23 +326,23 @@ defineOptions({
   background: linear-gradient(#fff 96%, #eee 4%);
 }
 #silence-bt .active {
-  box-shadow: inset -5px 5px 20px rgba(0,0,0,0.2);
-  background:linear-gradient(to bottom, #fff 0%, #eee 100%);
+  box-shadow: inset -5px 5px 20px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(to bottom, #fff 0%, #eee 100%);
 }
 
 .rhythm-modif {
-    display: flex;
-    margin: 0px;
-    gap: 5px;
-    align-items: center;
+  display: flex;
+  margin: 0px;
+  gap: 5px;
+  align-items: center;
 }
 
 .rhythm-modif-bt {
-   height: 50px;
-   border-radius: 5px;
-   width: 40px;
-   background-color: white;
-   position: relative;
+  height: 50px;
+  border-radius: 5px;
+  width: 40px;
+  background-color: white;
+  position: relative;
 }
 
 .rhythm-modif-bt img {
@@ -316,25 +350,25 @@ defineOptions({
 }
 
 .octave-modif-bt-div {
-    display: flex;
-    margin-right: 10px;
-    gap: 10px;
+  display: flex;
+  margin-right: 10px;
+  gap: 10px;
 }
 
 .octave-modif {
-    display: flex;
-    align-items: center;
-    margin: 10px;
+  display: flex;
+  align-items: center;
+  margin: 10px;
 }
 
-.rhythm-modif-bt, .octave-modif-bt {
-    border-radius: 3px;
-    border: none;
-
+.rhythm-modif-bt,
+.octave-modif-bt {
+  border-radius: 3px;
+  border: none;
 }
 
 .white-label {
-    color: white;
+  color: white;
 }
 
 .piano-keys .black {
@@ -346,8 +380,8 @@ defineOptions({
   background: linear-gradient(#333, #000);
 }
 .piano-keys .black.active {
-  box-shadow: inset -5px -10px 10px rgba(255,255,255,0.1);
-  background:linear-gradient(to bottom, #000, #434343);
+  box-shadow: inset -5px -10px 10px rgba(255, 255, 255, 0.1);
+  background: linear-gradient(to bottom, #000, #434343);
 }
 .piano-keys .white {
   height: 230px;
@@ -357,14 +391,14 @@ defineOptions({
   background: linear-gradient(#fff 96%, #eee 4%);
 }
 .piano-keys .white.active {
-  box-shadow: inset -5px 5px 20px rgba(0,0,0,0.2);
-  background:linear-gradient(to bottom, #fff 0%, #eee 100%);
+  box-shadow: inset -5px 5px 20px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(to bottom, #fff 0%, #eee 100%);
 }
 .piano-keys .key span {
   position: absolute;
   bottom: 20px;
   width: 100%;
-  color: #A2A2A2;
+  color: #a2a2a2;
   font-size: 1.13rem;
   text-align: center;
 }

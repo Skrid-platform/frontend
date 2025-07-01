@@ -1,5 +1,5 @@
 <template>
-  <div class="paginated-result">
+  <div class="paginated-results">
     <div class="navigation" v-if="true">
       <button id="csv-button" class="pagination-bt">Télécharger les résultats en CSV</button>
 
@@ -59,7 +59,7 @@ import { fetchMeiFileByFileName } from '@/services/dataBaseQueryServices';
 import { computed, ref, watch } from 'vue';
 
 defineOptions({
-  name: 'PaginatedResult',
+  name: 'PaginatedResults',
 });
 
 const props = defineProps({
@@ -191,7 +191,7 @@ function LoadPageN() {
 </script>
 
 <style scoped>
-.paginated-result {
+.paginated-results {
   flex: 1;
   padding: 20px;
   width: auto;

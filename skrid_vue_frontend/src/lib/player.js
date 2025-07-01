@@ -1,3 +1,19 @@
+//====== Constants ======//
+/** All the possible durations for a note */
+const durationNoteWithDots = {
+    '32': 1 / 32,         // thirty-second (triple croche)
+    '32d': 1 / 32 + 1 / 64, // dotted thirty-second (triple croche pointée)
+    '16': 1 / 16,         // sixteenth (double croche)
+    '16d': 1 / 16 + 1 / 32, // dotted sixteenth (double croche pointée)
+    '8': 1 / 8,           // eighth (croche)
+    '8d': 1 / 8 + 1 / 16,   // dotted eighth (croche pointée)
+    'q': 1 / 4,           // (quarter)
+    'qd': 1 / 4 + 1 / 8,    // (dotted quarter)
+    'h': 1 / 2,           // (half)
+    'hd': .5 + .25,     // (dotted half)
+    'w': 1              // (whole)
+};
+
 /**
  * Class defining methods to play music from the vexflow stave
  */
@@ -8,7 +24,7 @@ class Player {
     #currently_played_notes_playback;
 
     /** Store when the user plays the melody */
-    #is_playing;
+    is_playing;
     /** Flag to stop the melody from playing */
     #stop_melody;
 
@@ -16,7 +32,7 @@ class Player {
         // this.#currently_played_notes = {};
         this.#currently_played_notes_playback = {};
 
-        this.#is_playing = false;
+        this.is_playing = false;
         this.#stop_melody = false;
     }
 
@@ -151,15 +167,15 @@ class Player {
     async playMelodyBtHandler(play_bt, melody) {
         // const play_bt = document.getElementById('play_melody');
 
-        if (!this.#is_playing) {
-            this.#is_playing = true;
+        if (!this.is_playing) {
+            this.is_playing = true;
             // play_bt.disabled = true;
             play_bt.innerText = 'Arrêter la mélodie';
             play_bt.style.backgroundColor = 'red';
 
             await this.playMelody(melody);
 
-            this.#is_playing = false;
+            this.is_playing = false;
             // play_bt.disabled = false;
             play_bt.innerText = 'Jouer la mélodie';
             play_bt.style.backgroundColor = '#62aadd';

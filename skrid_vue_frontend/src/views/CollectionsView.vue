@@ -39,14 +39,14 @@
           <a :href="`data/${authors.selectedNameAuthor}/archives/${authors.selectedNameAuthor}_FilesPdf.zip`">PDF</a>,
           <a :href="`data/${authors.selectedNameAuthor}/archives/${authors.selectedNameAuthor}_FilesSvg.zip`">SVG</a>
         </p>
-        <paginated-result :data="collectionScoresMetadata" />
+        <paginated-results :data="collectionScoresMetadata" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import PaginatedResult from '@/components/common/PaginatedResult.vue';
+import PaginatedResults from '@/components/common/PaginatedResults.vue';
 import { fetchCollectionScoresNamesByAuthor } from '@/services/dataBaseQueryServices';
 import { useAuthorsStore } from '@/stores/authorsStore';
 import { onMounted, ref } from 'vue';
