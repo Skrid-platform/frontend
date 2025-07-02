@@ -3,7 +3,7 @@
     <div class="search-pattern">
       <stave></stave>
       <br />
-      <clavier></clavier>
+      <keyboard></keyboard>
       <br />
       <div class="flex-column" style="display: flex; justify-content: space-between; gap: 20px">
         <div class="collections-options">
@@ -127,7 +127,7 @@
 </template>
 
 <script setup>
-import Clavier from '@/components/common/Clavier.vue';
+import Keyboard from '@/components/common/Keyboard.vue';
 import Stave from '@/components/common/Stave.vue';
 import PaginatedResults from '@/components/common/PaginatedResults.vue';
 import { onMounted } from 'vue';

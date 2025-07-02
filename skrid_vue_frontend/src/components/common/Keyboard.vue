@@ -169,7 +169,7 @@
     <!-- Ajout du boutton options pour optimiser le visuel de la page / clavier -->
     <!--<button id="toggleButton1" class="btn btn-outline-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#bellow-keyboard" aria-expanded="false" aria-controls="bellow-keyboard" data-button="options1">
           Options avancées
-        </button>-->
+        </button>-->clavier
     <!--<div class='below-keyboard collapse collapse-vertical' id="bellow-keyboard">-->
     <div class="d-flex gap-4">
       <!-- <button data-key='r' id='silence-bt'><span>Silence (b)</span></button> -->
@@ -236,7 +236,7 @@
 import { ref } from 'vue';
 
 defineOptions({
-  name: 'Clavier',
+  name: 'Keyboard',
 });
 
 const volume = ref(0.5);
