@@ -43,12 +43,12 @@ class Player {
      * @param {Audio} [audio=null] - if not null, use this audio to make the sound
      * @param {number} [volume=0.5] - the audio volume (in [0, 1])
      * */
-    playTune(note, audio=null, volume=0.5) {
+    playTune(note, audio = null, volume = 0.5) {
         if (note == 'r')
             return;
 
         if (audio == null) {
-            this.#currently_played_notes_playback[note] = {audio: new Audio()};
+            this.#currently_played_notes_playback[note] = { audio: new Audio() };
             audio = this.#currently_played_notes_playback[note].audio;
         }
 
@@ -57,7 +57,7 @@ class Player {
         if (key.includes('s')) { // convert sharp to flat
             const Notes = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
-            for (let k = 0 ; k < Notes.length ; ++k) {
+            for (let k = 0; k < Notes.length; ++k) {
                 if (key[0] == Notes[k]) {
                     key = key.replace(Notes[k], Notes[(k + 1) % Notes.length]);
                     key = key.replace('s', 'b');
@@ -78,7 +78,7 @@ class Player {
      * @param {string} note - the note to stop playing (format example : C#/4, C/4)
      * @param {Audio} [audio=null] - if not null, use this audio to stop the sound.
      */
-    stopTune(note, audio=null) {
+    stopTune(note, audio = null) {
         if (note == 'r')
             return;
 
@@ -89,9 +89,9 @@ class Player {
             delete this.#currently_played_notes_playback[note_arr];
         }
 
-        var fadeAudio = setInterval(function() {
+        var fadeAudio = setInterval(function () {
             if (audio.volume > 0) {
-                audio.volume -= 1/8;
+                audio.volume -= 1 / 8;
             }
             else {
                 clearInterval(fadeAudio);
@@ -114,7 +114,7 @@ class Player {
         // let audio = currently_played_notes_playback[note].audio;
 
         let class_inst = this;
-        var stopAudio = setInterval(function() {
+        var stopAudio = setInterval(function () {
             if (audio.currentTime >= 2 * durationNoteWithDots[rhythm]) {
                 clearInterval(stopAudio);
                 class_inst.stopTune(note, audio);
@@ -139,14 +139,14 @@ class Player {
      * @param {Array} melody - the `melody` array from {@linkcode StaveRepresentation}
      */
     async playMelody(melody) {
-        for (let k = 0 ; k < melody.length ; ++k) {
+        for (let k = 0; k < melody.length; ++k) {
             if (!this.#stop_melody) {
                 let duration = melody[k].dots > 0 ? melody[k].duration + 'd' : melody[k].duration;
 
                 if (melody[k].noteType == 'r')
                     this.playNoteWithRhythm('r')
                 else
-                    melody[k].keys.forEach((key) => {this.playNoteWithRhythm(key.replace('/', ''), duration)}); // Play chord (or just one note)
+                    melody[k].keys.forEach((key) => { this.playNoteWithRhythm(key.replace('/', ''), duration) }); // Play chord (or just one note)
 
                 await this.#sleep(1000 * durationNoteWithDots[duration]);
             }
@@ -155,6 +155,14 @@ class Player {
                 break;
             }
         }
+    }
+
+    /**
+    * Stops the melody from playing.
+    */
+    stopMelody() {
+        this.#stop_melody = true;
+        this.is_playing = false;
     }
 
     /**
