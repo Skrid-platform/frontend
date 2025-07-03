@@ -231,15 +231,21 @@
 </template>
 
 <script setup>
-
-
-import { ref } from 'vue';
+import Player from '@/lib/player.js';
+import StaveRepresentation from '@/lib/stave.js';
+import { onMounted, ref, watch } from 'vue';
 
 defineOptions({
   name: 'Keyboard',
 });
 
+const staveRepr = StaveRepresentation.getInstance();
+const player = Player.getInstance(); // use singleton patron to centrelize the volume handler
+
 const volume = ref(0.5);
+watch(volume, (newVolume) => {
+  player.setVolume(newVolume);
+});
 
 /**
  * This function hides/shows the keys for the buttons according to the user input
@@ -250,6 +256,10 @@ const showHideKeys = () => {
   // toggling hide class from each key on the checkbox click
   pianoKeys.forEach((key) => key.classList.toggle('hide'));
 };
+
+onMounted(() => {
+  
+});
 </script>
 
 <style scoped>

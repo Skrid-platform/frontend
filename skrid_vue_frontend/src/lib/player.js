@@ -20,13 +20,31 @@ const durationNoteWithDots = {
 class Player {
     // #currently_played_notes;
 
-    /** Stores notes when they are beeing played */
+    /** Stores notes when they are beeing played 
+     * @type {Object.<string, {audio: Audio}>}
+     * @default {}
+    */
     #currently_played_notes_playback;
 
-    /** Store when the user plays the melody */
-    is_playing;
-    /** Flag to stop the melody from playing */
-    #stop_melody;
+    /** Store when the user plays the melody 
+     * @type {boolean}
+     * @default false
+    */
+    is_playing = false;
+    /** Flag to stop the melody from playing 
+     * @type {boolean}
+     * @default false
+    */
+    #stop_melody = false;
+    
+    /**
+     * Volume of the audio (in [0, 1])
+     * @type {number}
+     * @default 0.5
+     */
+    #volume = 0.5;
+
+    static #instance = null;
 
     constructor() {
         // this.#currently_played_notes = {};
@@ -37,13 +55,23 @@ class Player {
     }
 
     /**
+     * Returns the singleton instance of Player.
+     * @returns {Player} - the singleton instance of Player.
+     * */
+    static getInstance() {
+        if (Player.#instance === null) {
+            Player.#instance = new Player();
+        }
+        return Player.#instance;
+    }
+    /**
      * Plays the sound of the button that has been pressed
      *
      * @param {string} note - the note to play (format example : C#4, C4)
      * @param {Audio} [audio=null] - if not null, use this audio to make the sound
      * @param {number} [volume=0.5] - the audio volume (in [0, 1])
      * */
-    playTune(note, audio = null, volume = 0.5) {
+    playTune(note, audio = null) {
         if (note == 'r')
             return;
 
@@ -105,6 +133,7 @@ class Player {
      *
      * @param {string} note - the note (pitch) to play (e.g C#/4) ;
      * @param {string} rhythm - the rhythm of the note (e.g h, 8d, ...)
+     * @param {number} [volume=0.5] - the audio volume (in [0, 1])
      */
     playNoteWithRhythm(note, rhythm) {
         let audio = new Audio();
@@ -190,6 +219,21 @@ class Player {
         }
         else
             this.#stop_melody = true;
+    }
+
+    /**
+     * Sets the volume of the audio.
+     * Also change the volume of all currently played notes.
+     * @param {*} volume 
+     */
+    setVolume(volume) {
+        if (volume < 0 || volume > 1) {
+            throw new Error('Volume must be in [0, 1]');
+        }
+        this.#volume = volume;
+        for (const note in this.#currently_played_notes_playback) {
+            this.#currently_played_notes_playback[note].audio.volume = volume;
+        }
     }
 }
 
