@@ -69,7 +69,6 @@ class Player {
      *
      * @param {string} note - the note to play (format example : C#4, C4)
      * @param {Audio} [audio=null] - if not null, use this audio to make the sound
-     * @param {number} [volume=0.5] - the audio volume (in [0, 1])
      * */
     playTune(note, audio = null) {
         if (note == 'r')
@@ -94,7 +93,7 @@ class Player {
             }
         }
 
-        audio.volume = volume;
+        audio.volume = this.#volume;
         audio.src = `acoustic_grand_piano-mp3/${key}.mp3`;
 
         audio.play();
@@ -133,7 +132,6 @@ class Player {
      *
      * @param {string} note - the note (pitch) to play (e.g C#/4) ;
      * @param {string} rhythm - the rhythm of the note (e.g h, 8d, ...)
-     * @param {number} [volume=0.5] - the audio volume (in [0, 1])
      */
     playNoteWithRhythm(note, rhythm) {
         let audio = new Audio();
