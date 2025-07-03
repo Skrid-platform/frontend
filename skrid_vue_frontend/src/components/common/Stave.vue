@@ -32,12 +32,11 @@ defineOptions({
   name: 'Stave',
 });
 
-const staveRepr = useStaveStore();
+
 const player = new Player();
 
 onMounted(() => {
-  const musicScoreElement = document.getElementById('music-score');
-  staveRepr.init(musicScoreElement);
+  
 });
 </script>
 
@@ -45,7 +44,7 @@ onMounted(() => {
 #stop_melody {
   background: red;
 }
-#play_melody {
+button {
   background: #7ab6e0;
 }
 </style>
