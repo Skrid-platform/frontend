@@ -33,7 +33,6 @@ defineOptions({
 });
 
 const staveRepr = StaveRepresentation.getInstance();
-
 const player = Player.getInstance();
 
 onMounted(() => {

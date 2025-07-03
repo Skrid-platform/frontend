@@ -8,16 +8,18 @@
 
       <div class="octave-modif">
         <div class="octave-modif-bt-div">
-          <button class="btn btn-outline-secondary text-white octave-modif-bt" data-key="<" id="octave-minus">
+          <button class="btn btn-outline-secondary text-white octave-modif-bt" @click="changeOctave(-1)">
             <span>Octave - (c)</span>
           </button>
-          <button class="btn btn-outline-secondary text-white octave-modif-bt" data-key=">" id="octave-plus">
+          <button class="btn btn-outline-secondary text-white octave-modif-bt" @click="changeOctave(1)">
             <span>Octave + (v)</span>
           </button>
         </div>
-        <label id="octave-lb" class="white-label">4</label>
+        <label id="octave-lb" class="white-label">{{ octave }}</label>
       </div>
+
       <div class="column keys-checkbox"><span>Touches</span><input type="checkbox" checked @click="showHideKeys()" /></div>
+    
     </header>
     <ul class="piano-keys">
       <li class="key white" data-key="C4">
@@ -169,7 +171,7 @@
     <!-- Ajout du boutton options pour optimiser le visuel de la page / clavier -->
     <!--<button id="toggleButton1" class="btn btn-outline-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#bellow-keyboard" aria-expanded="false" aria-controls="bellow-keyboard" data-button="options1">
           Options avancées
-        </button>-->clavier
+        </button>-->
     <!--<div class='below-keyboard collapse collapse-vertical' id="bellow-keyboard">-->
     <div class="d-flex gap-4">
       <!-- <button data-key='r' id='silence-bt'><span>Silence (b)</span></button> -->
@@ -221,11 +223,11 @@
       </div>
 
       <!-- <div class='qwerty-switch'>
-            <label class='white-label'>
-              <input type='checkbox' id='qwerty-checkbox'>
-              Qwerty
-            </label>
-          </div> -->
+        <label class='white-label'>
+          <input type='checkbox' id='qwerty-checkbox'>
+          Qwerty
+        </label>
+      </div> -->
     </div>
   </div>
 </template>
@@ -242,10 +244,28 @@ defineOptions({
 const staveRepr = StaveRepresentation.getInstance();
 const player = Player.getInstance(); // use singleton patron to centrelize the volume handler
 
+const octave = ref(4);
+
 const volume = ref(0.5);
 watch(volume, (newVolume) => {
   player.setVolume(newVolume);
 });
+
+
+/**
+ * Changes the current octave
+ *
+ * @param {number} diff - the number of octaves to change (e.g +1, -1, ...)
+ */
+function changeOctave(diff) {
+    octave.value += diff;
+
+    if (octave.value < 1)
+        octave.value = 1;
+
+    if (octave.value > 6)
+        octave.value = 6;
+}
 
 /**
  * This function hides/shows the keys for the buttons according to the user input
