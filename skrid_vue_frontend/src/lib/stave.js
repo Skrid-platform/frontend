@@ -41,6 +41,10 @@ class StaveRepresentation {
     /**
      * Returns the instance of the stave representation.
      * If it does not exist, creates a new one.
+     * @param {number} [width=450] - the width of the representation of the stave
+     * @param {number} [height=200] - the height of the representation of
+     * 
+     * @returns {StaveRepresentation} - the instance of the stave representation.
      */
     static getInstance(width = 450, height = 200) {
         if (this.#instance === null) {
@@ -58,9 +62,12 @@ class StaveRepresentation {
      * @param {HTMLElement} clearAllButton - the HTML button used to clear all the stave
      * @param {HTMLElement} clearLastNoteButton - the HTML button used to clear the last note from the stave
      */
-    init(player, playBt, clearAllButton, clearLastNoteButton) {
+    init() {
         this.#html_elem = document.getElementById('music-score');
-
+        if (!this.#html_elem) {
+            console.error("Error: HTML element with id 'music-score' not found.");
+            return;
+        }
 
         // Create an SVG renderer and attach it to the pentagram
         this.#renderer = new Renderer(this.#html_elem, Renderer.Backends.SVG);

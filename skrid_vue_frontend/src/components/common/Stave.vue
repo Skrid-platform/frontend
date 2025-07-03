@@ -25,18 +25,19 @@
 
 <script setup>
 import Player from '@/lib/player.js';
-import { useStaveStore } from '@/stores/staveStore';
+import StaveRepresentation from '@/lib/stave.js';
 import { onMounted } from 'vue';
 
 defineOptions({
   name: 'Stave',
 });
 
+const staveRepr = StaveRepresentation.getInstance();
 
-const player = new Player();
+const player = Player.getInstance();
 
 onMounted(() => {
-  
+  staveRepr.init();
 });
 </script>
 
