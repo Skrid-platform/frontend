@@ -15,8 +15,7 @@
       >
         Arrêter la mélodie
       </button>
-      <button 
-        v-else @click="player.playMelody(staveRepr.melody)" type="button" class="btn btn-info text-white">
+      <button v-else @click="player.playMelody(staveRepr.melody)" type="button" class="btn btn-info text-white">
         Jouer la mélodie
       </button>
     </div>
@@ -35,8 +34,32 @@ defineOptions({
 const staveRepr = StaveRepresentation.getInstance();
 const player = Player.getInstance();
 
+function keyListener(event) {
+  console.log(event)
+  //---Delete all
+  if (event.key == 'Backspace' && event.ctrlKey) {
+    staveRepr.clear_all_pattern();
+  }
+  //---Delete last note
+  else if (event.key == 'Backspace') {
+    staveRepr.remove_last_note();
+  }
+  //---Play melody
+  else if (event.key == ' ' && !event.repeat) {
+    event.preventDefault(); // prevent scrolling
+    if (player.is_playing.value) {
+      player.stopMelody();
+    } else {
+      player.playMelody(staveRepr.melody);
+    }
+  }
+}
+
 onMounted(() => {
   staveRepr.init();
+
+  // bind keyboard events
+  document.addEventListener('keydown', keyListener);
 });
 </script>
 
