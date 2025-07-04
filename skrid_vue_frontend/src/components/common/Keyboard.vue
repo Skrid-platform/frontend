@@ -281,11 +281,11 @@ function showHideKeys() {
   const pianoKeys = document.querySelectorAll('.piano-keys .key');
   // toggling hide class from each key on the checkbox click
   pianoKeys.forEach((key) => key.classList.toggle('hide'));
-};
+}
 
 function toggleKeyboardMapping() {
   isAzertyMapping = !isAzertyMapping;
-};
+}
 
 /**
  * Manages when a piano key is released.
@@ -381,6 +381,15 @@ function keyDown(note, key_id = null) {
  * only for the piano keys and the silence. (melody management is in stave.vue)
  */
 function keyListener(event) {
+  // change octave with '-' and '+' keys
+  // or 'c' and 'v' keys
+  if (event.type == 'keydown' && (event.key == '-' || event.key == '+' || event.key == 'c' || event.key == 'v')) {
+    if (event.key == '-' || event.key == 'c') {
+      changeOctave(-1);
+    } else {
+      changeOctave(1);
+    }
+  }
   //---Ignore repeat key for all the following
   if (event.repeat) return;
 
