@@ -19,8 +19,8 @@
       </div>
 
       <div class="column keys-checkbox"><span>Touches</span><input type="checkbox" checked @click="showHideKeys()" /></div>
-    
     </header>
+
     <ul class="piano-keys">
       <li class="key white" data-key="C4">
         <span
@@ -167,6 +167,7 @@
         >
       </li>
     </ul>
+
     <br />
     <!-- Ajout du boutton options pour optimiser le visuel de la page / clavier -->
     <!--<button id="toggleButton1" class="btn btn-outline-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#bellow-keyboard" aria-expanded="false" aria-controls="bellow-keyboard" data-button="options1">
@@ -235,6 +236,7 @@
 <script setup>
 import Player from '@/lib/player.js';
 import StaveRepresentation from '@/lib/stave.js';
+import { durationNote } from '@/constants/index.js';
 import { onMounted, ref, watch } from 'vue';
 
 defineOptions({
@@ -251,6 +253,7 @@ watch(volume, (newVolume) => {
   player.setVolume(newVolume);
 });
 
+let currently_played_notes = {}; // Object to keep track of currently played notes
 
 /**
  * Changes the current octave
@@ -258,13 +261,11 @@ watch(volume, (newVolume) => {
  * @param {number} diff - the number of octaves to change (e.g +1, -1, ...)
  */
 function changeOctave(diff) {
-    octave.value += diff;
+  octave.value += diff;
 
-    if (octave.value < 1)
-        octave.value = 1;
+  if (octave.value < 1) octave.value = 1;
 
-    if (octave.value > 6)
-        octave.value = 6;
+  if (octave.value > 6) octave.value = 6;
 }
 
 /**
@@ -277,8 +278,120 @@ const showHideKeys = () => {
   pianoKeys.forEach((key) => key.classList.toggle('hide'));
 };
 
+/**
+ * Manages when a piano key is released.
+ *
+ * It gets the duration, adds the note to `melody`, and display the note.
+ *
+ * @param {string} note - the note name (e.g C/5, C#/4, with the '/')
+ * @param {string} [key_id=null] - the html `data-key` field. If null, uses `note_arr` instead.
+ */
+function keyUp(note, key_id = null) {
+  let note_arr = note.replace('/', '');
+
+  // Set key as unselected in the html
+  if (key_id == null || note == 'r') key_id = note_arr;
+
+  const clickedKey = document.querySelector(`[data-key="${key_id}"]`); // getting clicked key element
+  clickedKey.classList.remove('active');
+
+  // Stop the playing sound
+  player.stopTune(note_arr);
+
+  // Calculate duration
+  let elapsed = (new Date() - currently_played_notes[note_arr].start) / 1000;
+  elapsed /= 2;
+
+  // Check the correct note duration based on the time elapsed (using the durationNote array previously defined)
+  const sortedKeys = Object.keys(durationNote).sort((a, b) => durationNote[a] - durationNote[b]);
+  let duration;
+
+  if (elapsed <= durationNote[sortedKeys[sortedKeys.length - 1]]) {
+    for (let i = 0; i < sortedKeys.length; i++) {
+      if (elapsed < durationNote[sortedKeys[i]]) {
+        duration = sortedKeys[i];
+        break;
+      }
+    }
+  } // If the duration is longer than the longest note, just add the longest note.
+  else duration = sortedKeys[sortedKeys.length - 1];
+
+  if (Object.keys(currently_played_notes).length > 1) currently_played_notes[note_arr] = { duration: duration };
+  else delete currently_played_notes[note_arr];
+
+  let wait_for_chord = false;
+  for (let notePlayed in currently_played_notes) {
+    if ('start' in currently_played_notes[notePlayed])
+      // if there is a note that is not stopped, wait of it.
+      wait_for_chord = true;
+  }
+
+  if (wait_for_chord) return;
+
+  let keys = [note];
+  for (let notePlayed in currently_played_notes) {
+    let nt = notePlayed.slice(0, -1) + '/' + notePlayed.slice(-1);
+    if (!keys.includes(nt)) keys.push(nt);
+    delete currently_played_notes[notePlayed];
+  }
+
+  // Display the note
+  staveRepr.displayNote(note, keys, duration);
+}
+
+/**
+ * Manages when a piano key is pressed down.
+ *
+ * It starts a timer and plays the note.
+ *
+ * @param {string} note - the note name (e.g C/5, C#/4, or C5, C#4, ...)
+ * @param {string} [key_id=null] - the html `data-key` field. If null, uses `note` instead.
+ */
+function keyDown(note, key_id = null) {
+  note = note.replace('/', '');
+
+  currently_played_notes[note] = { start: new Date() };
+
+  if (note != 'r')
+    // silence
+    player.playTune(note);
+
+  // Set key as selected in the html
+  if (key_id == null || note == 'r') key_id = note;
+
+  const clickedKey = document.querySelector(`[data-key="${key_id}"]`); // getting clicked key element
+  clickedKey.classList.add('active');
+  // Removing active class after 150 ms from the clicked key element
+  // setTimeout(() => {
+  //     clickedKey.classList.remove("active");
+  // }, 150);
+}
+
 onMounted(() => {
-  
+  let pianoKeys = document.querySelectorAll('.piano-keys .key');
+  // Adding mouseDown, mouseUp listeners to each piano key
+  pianoKeys.forEach((key) => {
+    key.addEventListener('mousedown', () => {
+      let oct = parseInt(key.dataset.key.at(-1)) - 4;
+      let key_ = key.dataset.key.slice(0, -1) + (oct + octave.value);
+      keyDown(key_, key.dataset.key);
+    });
+    key.addEventListener('mouseup', () => {
+      // Make the note with the '/'
+      let newkey;
+
+      if (key.classList.contains('black')) newkey = key.dataset.key.slice(0, 2) + '/' + key.dataset.key.slice(2);
+      else newkey = key.dataset.key.slice(0, 1) + '/' + key.dataset.key.slice(1);
+
+      let oct = parseInt(key.dataset.key.slice(-1)[0]) - 4;
+      newkey = newkey.slice(0, -1) + (oct + octave.value);
+
+      keyUp(newkey, key.dataset.key);
+    });
+  });
+
+
+
 });
 </script>
 
