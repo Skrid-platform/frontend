@@ -1,5 +1,5 @@
 import { durationNoteWithDots } from "../constants";
-
+import { ref } from "vue";
 /**
  * Class defining methods to play music from the vexflow stave
  */
@@ -13,10 +13,12 @@ class Player {
     #currently_played_notes_playback;
 
     /** Store when the user plays the melody 
-     * @type {boolean}
+     * ref makes it reactive for Vue to update the UI
+     * @type {Ref<boolean>}
      * @default false
     */
-    is_playing = false;
+    is_playing = ref(false);
+
     /** Flag to stop the melody from playing 
      * @type {boolean}
      * @default false
@@ -36,7 +38,7 @@ class Player {
         // this.#currently_played_notes = {};
         this.#currently_played_notes_playback = {};
 
-        this.is_playing = false;
+        this.is_playing.value = false;
         this.#stop_melody = false;
     }
 
@@ -152,6 +154,10 @@ class Player {
      * @param {Array} melody - the `melody` array from {@linkcode StaveRepresentation}
      */
     async playMelody(melody) {
+        if (melody.length == 0) {
+            return;
+        }
+        this.is_playing.value = true;
         for (let k = 0; k < melody.length; ++k) {
             if (!this.#stop_melody) {
                 let duration = melody[k].dots > 0 ? melody[k].duration + 'd' : melody[k].duration;
@@ -168,6 +174,7 @@ class Player {
                 break;
             }
         }
+        this.is_playing.value = false;
     }
 
     /**
@@ -175,34 +182,7 @@ class Player {
     */
     stopMelody() {
         this.#stop_melody = true;
-        this.is_playing = false;
-    }
-
-    /**
-     * Plays the melody if it not currently playing.
-     * Otherwise stop it.
-     *
-     * @param {HTMLElement} play_bt - the HTML button used to play / stop the melody. Here it is used to change the color (for 'play' or 'stop').
-     * @param {Array} melody - the `melody` array from {@linkcode StaveRepresentation}
-     */
-    async playMelodyBtHandler(play_bt, melody) {
-        // const play_bt = document.getElementById('play_melody');
-
-        if (!this.is_playing) {
-            this.is_playing = true;
-            // play_bt.disabled = true;
-            play_bt.innerText = 'Arrêter la mélodie';
-            play_bt.style.backgroundColor = 'red';
-
-            await this.playMelody(melody);
-
-            this.is_playing = false;
-            // play_bt.disabled = false;
-            play_bt.innerText = 'Jouer la mélodie';
-            play_bt.style.backgroundColor = '#62aadd';
-        }
-        else
-            this.#stop_melody = true;
+        this.is_playing.value = false;
     }
 
     /**
