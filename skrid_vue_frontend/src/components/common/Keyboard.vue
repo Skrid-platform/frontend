@@ -1,9 +1,13 @@
 <template>
   <div class="wrapper">
     <header>
-      <div class="column volume-slider">
+      <div class="volume-slider">
         <span>Volume</span>
         <input v-model="volume" type="range" min="0" max="1" value="0.5" step="any" />
+      </div>
+
+      <div class="keys-checkbox">
+        <span>azerty</span><input type="checkbox" id="qwerty-checkbox" @click="toggleKeyboardMapping()" /><span>qwerty</span>
       </div>
 
       <div class="octave-modif">
@@ -18,7 +22,7 @@
         <label id="octave-lb" class="white-label">{{ octave }}</label>
       </div>
 
-      <div class="column keys-checkbox"><span>Touches</span><input type="checkbox" checked @click="showHideKeys()" /></div>
+      <div class="keys-checkbox"><span>Touches</span><input type="checkbox" checked @click="showHideKeys()" /></div>
     </header>
 
     <ul class="piano-keys">
@@ -176,7 +180,7 @@
     <!--<div class='below-keyboard collapse collapse-vertical' id="bellow-keyboard">-->
     <div class="d-flex gap-4">
       <!-- <button data-key='r' id='silence-bt'><span>Silence (b)</span></button> -->
-      <button class="m-5" data-key="r" id="silence-bt">
+      <button @mousedown="keyDown('r')" @mouseup="keyUp('r')" class="m-5" data-key="r" id="silence-bt">
         <span>
           <img src="/silences_pics/s1.png" height="40px" alt="Silence" />
           /
@@ -236,7 +240,7 @@
 <script setup>
 import Player from '@/lib/player.js';
 import StaveRepresentation from '@/lib/stave.js';
-import { durationNote } from '@/constants/index.js';
+import { durationNote, mapping_azerty, qwerty_us_to_azerty } from '@/constants/index.js';
 import { onMounted, ref, watch } from 'vue';
 
 defineOptions({
@@ -255,6 +259,7 @@ watch(volume, (newVolume) => {
 
 let currently_played_notes = {}; // Object to keep track of currently played notes
 
+let azertyMapping = true; // Default keyboard mapping = azerty
 /**
  * Changes the current octave
  *
@@ -276,6 +281,10 @@ const showHideKeys = () => {
   const pianoKeys = document.querySelectorAll('.piano-keys .key');
   // toggling hide class from each key on the checkbox click
   pianoKeys.forEach((key) => key.classList.toggle('hide'));
+};
+
+const toggleKeyboardMapping = () => {
+  keyboardMapping = !keyboardMapping;
 };
 
 /**
@@ -367,6 +376,43 @@ function keyDown(note, key_id = null) {
   // }, 150);
 }
 
+/**
+ * Manages event associated to key presses.
+ * only for the piano keys and the silence. (melody management is in stave.vue)
+ */
+function keyListener(event) {
+  //---Ignore repeat key for all the following
+  if (event.repeat) return;
+
+  // Get the key (convert if qwerty)
+  let key;
+  if (!azertyMapping) {
+    key = qwerty_us_to_azerty[event.key] || event.key;
+  } else {
+    key = event.key;
+  }
+
+  // If the key is not in the mapping, return
+  if (key in mapping_azerty) {
+    let note_json = mapping_azerty[key];
+    let note = note_json.pitch + '/' + (note_json.octave + octave.value);
+    let key_id = note_json.pitch + (note_json.octave + 4);
+
+    if (note_json.pitch == 'r') {
+      note = 'r';
+      key_id = 'r';
+    }
+
+    if (event.type == 'keydown') {
+      // Pressed down : play sound, start timer
+      keyDown(note, key_id);
+    } else if (event.type == 'keyup') {
+      // Key released : add note
+      keyUp(note, key_id);
+    }
+  }
+}
+
 onMounted(() => {
   let pianoKeys = document.querySelectorAll('.piano-keys .key');
   // Adding mouseDown, mouseUp listeners to each piano key
@@ -390,8 +436,10 @@ onMounted(() => {
     });
   });
 
-
-
+  // Adding keydown, keyup listeners to the document only for the piano keys
+  // and the silence button
+  document.addEventListener('keydown', keyListener);
+  document.addEventListener('keyup', keyListener);
 });
 </script>
 
@@ -410,6 +458,13 @@ onMounted(() => {
   justify-content: space-between;
 }
 
+.volume-slider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+}
+
 .volume-slider input {
   accent-color: #fff;
 }
@@ -417,6 +472,13 @@ onMounted(() => {
 header input {
   outline: none;
   border-radius: 30px;
+}
+
+.keys-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
 }
 
 .keys-checkbox input {
@@ -438,6 +500,9 @@ header input {
   background: #8c8c8c;
   transform: translateY(-50%);
   transition: all 0.3s ease;
+}
+.keys-checkbox #qwerty-checkbox::before {
+  background: #fff;
 }
 .keys-checkbox input:checked::before {
   left: 35px;

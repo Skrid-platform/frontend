@@ -104,9 +104,7 @@ class StaveRepresentation {
 
         // Cancel the previous pentagram
         const svg = document.querySelector("#music-score svg");
-        while (svg.firstChild) {
-            svg.removeChild(svg.firstChild);
-        }
+        svg.replaceChildren()
         this.#stave.setContext(this.#context).draw();
 
         // Re-draw it

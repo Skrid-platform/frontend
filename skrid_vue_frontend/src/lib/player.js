@@ -105,14 +105,15 @@ class Player {
         }
 
         var fadeAudio = setInterval(function () {
-            if (audio.volume > 0) {
-                audio.volume -= 1 / 8;
+            let newVolume = audio.volume - 1 / 8;
+            if (newVolume > 0) {
+                audio.volume = newVolume;
             }
             else {
                 clearInterval(fadeAudio);
                 audio.pause();
             }
-        }, 30);
+        }, 15);
     }
 
     /**
@@ -195,9 +196,6 @@ class Player {
             throw new Error('Volume must be in [0, 1]');
         }
         this.#volume = volume;
-        for (const note in this.#currently_played_notes_playback) {
-            this.#currently_played_notes_playback[note].audio.volume = volume;
-        }
     }
 }
 
