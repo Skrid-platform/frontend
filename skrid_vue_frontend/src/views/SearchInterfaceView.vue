@@ -7,7 +7,7 @@
       <br />
       <search-param></search-param>
     </div>
-    <paginated-results :data="resultsQuery" />
+    <paginated-results :data="resultsQuery" v-if="resultsQuery"/>
   </div>
 </template>
 
@@ -22,7 +22,7 @@ defineOptions({
   name: 'SearchInterfaceView',
 });
 
-const resultsQuery = ref([]);
+const resultsQuery = ref(null);
 
 onMounted(() => {
   document.addEventListener('keydown', keyListener);
