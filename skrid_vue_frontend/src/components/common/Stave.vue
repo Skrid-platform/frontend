@@ -47,4 +47,10 @@ onMounted(() => {
 button {
   background: #7ab6e0;
 }
+.clear_buttons {
+  align-self: center;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
 </style>
