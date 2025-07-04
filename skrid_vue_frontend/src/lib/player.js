@@ -1,18 +1,4 @@
-//====== Constants ======//
-/** All the possible durations for a note */
-const durationNoteWithDots = {
-    '32': 1 / 32,         // thirty-second (triple croche)
-    '32d': 1 / 32 + 1 / 64, // dotted thirty-second (triple croche pointée)
-    '16': 1 / 16,         // sixteenth (double croche)
-    '16d': 1 / 16 + 1 / 32, // dotted sixteenth (double croche pointée)
-    '8': 1 / 8,           // eighth (croche)
-    '8d': 1 / 8 + 1 / 16,   // dotted eighth (croche pointée)
-    'q': 1 / 4,           // (quarter)
-    'qd': 1 / 4 + 1 / 8,    // (dotted quarter)
-    'h': 1 / 2,           // (half)
-    'hd': .5 + .25,     // (dotted half)
-    'w': 1              // (whole)
-};
+import { durationNoteWithDots } from "../constants";
 
 /**
  * Class defining methods to play music from the vexflow stave
@@ -36,7 +22,7 @@ class Player {
      * @default false
     */
     #stop_melody = false;
-    
+
     /**
      * Volume of the audio (in [0, 1])
      * @type {number}
