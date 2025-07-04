@@ -35,7 +35,6 @@ const staveRepr = StaveRepresentation.getInstance();
 const player = Player.getInstance();
 
 function keyListener(event) {
-  console.log(event)
   //---Delete all
   if (event.key == 'Backspace' && event.ctrlKey) {
     staveRepr.clear_all_pattern();
