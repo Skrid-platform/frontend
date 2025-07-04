@@ -192,37 +192,37 @@
       </button>
 
       <div class="rhythm-modif">
-        <button class="rhythm-modif-bt" data-key="w" id="whole-bt">
+        <button @click="staveRepr.changeLastNoteRhythm('w')" class="rhythm-modif-bt" data-key="w" id="whole-bt">
           <img src="/notes_pics/1.png" height="50px" alt="Whole" />
         </button>
-        <button class="rhythm-modif-bt" data-key="hd" id="half-dotted-bt">
+        <button @click="staveRepr.changeLastNoteRhythm('hd')" class="rhythm-modif-bt" data-key="hd" id="half-dotted-bt">
           <img src="/notes_pics/2d.png" height="50px" alt="Dotted half" />
         </button>
-        <button class="rhythm-modif-bt" data-key="h" id="half-bt">
+        <button @click="staveRepr.changeLastNoteRhythm('h')" class="rhythm-modif-bt" data-key="h" id="half-bt">
           <img src="/notes_pics/2.png" height="50px" alt="Half" />
         </button>
-        <button class="rhythm-modif-bt" data-key="qd" id="quarter-dotted-bt">
+        <button @click="staveRepr.changeLastNoteRhythm('qd')" class="rhythm-modif-bt" data-key="qd" id="quarter-dotted-bt">
           <img src="/notes_pics/4d.png" height="50px" alt="Dotted quarter" />
         </button>
-        <button class="rhythm-modif-bt" data-key="q" id="quarter-bt">
+        <button @click="staveRepr.changeLastNoteRhythm('q')" class="rhythm-modif-bt" data-key="q" id="quarter-bt">
           <img src="/notes_pics/4.png" height="50px" alt="Quarter" />
         </button>
-        <button class="rhythm-modif-bt" data-key="8d" id="8th-dotted-bt">
+        <button @click="staveRepr.changeLastNoteRhythm('8d')" class="rhythm-modif-bt" data-key="8d" id="8th-dotted-bt">
           <img src="/notes_pics/8d.png" height="50px" alt="Dotted 8-th" />
         </button>
-        <button class="rhythm-modif-bt" data-key="8" id="8th-bt">
+        <button @click="staveRepr.changeLastNoteRhythm('8')" class="rhythm-modif-bt" data-key="8" id="8th-bt">
           <img src="/notes_pics/8.png" height="50px" alt="8-th" />
         </button>
-        <button class="rhythm-modif-bt" data-key="16d" id="16th-dotted-bt">
+        <button @click="staveRepr.changeLastNoteRhythm('16d')" class="rhythm-modif-bt" data-key="16d" id="16th-dotted-bt">
           <img src="/notes_pics/16d.png" height="50px" alt="Dotted 16-th" />
         </button>
-        <button class="rhythm-modif-bt" data-key="16" id="16th-bt">
+        <button @click="staveRepr.changeLastNoteRhythm('16')" class="rhythm-modif-bt" data-key="16" id="16th-bt">
           <img src="/notes_pics/16.png" height="50px" alt="16-th" />
         </button>
-        <button class="rhythm-modif-bt" data-key="32d" id="32th-dotted-bt">
+        <button @click="staveRepr.changeLastNoteRhythm('32d')" class="rhythm-modif-bt" data-key="32d" id="32th-dotted-bt">
           <img src="/notes_pics/32d.png" height="50px" alt="Dotted 32-th" />
         </button>
-        <button class="rhythm-modif-bt" data-key="32" id="32th-bt">
+        <button @click="staveRepr.changeLastNoteRhythm('32')" class="rhythm-modif-bt" data-key="32" id="32th-bt">
           <img src="/notes_pics/32.png" height="50px" alt="32-th" />
         </button>
       </div>
@@ -259,7 +259,7 @@ watch(volume, (newVolume) => {
 
 let currently_played_notes = {}; // Object to keep track of currently played notes
 
-let azertyMapping = true; // Default keyboard mapping = azerty
+let isAzertyMapping = true; // Default keyboard mapping = azerty
 /**
  * Changes the current octave
  *
@@ -276,15 +276,15 @@ function changeOctave(diff) {
 /**
  * This function hides/shows the keys for the buttons according to the user input
  */
-const showHideKeys = () => {
+function showHideKeys() {
   // getting all the piano keys
   const pianoKeys = document.querySelectorAll('.piano-keys .key');
   // toggling hide class from each key on the checkbox click
   pianoKeys.forEach((key) => key.classList.toggle('hide'));
 };
 
-const toggleKeyboardMapping = () => {
-  keyboardMapping = !keyboardMapping;
+function toggleKeyboardMapping() {
+  isAzertyMapping = !isAzertyMapping;
 };
 
 /**
@@ -386,7 +386,7 @@ function keyListener(event) {
 
   // Get the key (convert if qwerty)
   let key;
-  if (!azertyMapping) {
+  if (!isAzertyMapping) {
     key = qwerty_us_to_azerty[event.key] || event.key;
   } else {
     key = event.key;
