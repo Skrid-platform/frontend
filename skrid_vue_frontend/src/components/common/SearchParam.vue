@@ -44,26 +44,27 @@
           <label class="tooltip-lb" id="pitch-lb">
             <input id="pitch-cb" type="checkbox" checked />
             Hauteur des notes
-            <!-- <span class='tooltiptext'>Permet de prendre en compte / ignorer la hauteur des notes</span> --> </label
-          ><br />
+          </label>
+          <br />
           <label class="tooltip-lb" id="rhythm-lb">
             <input id="rhythm-cb" type="checkbox" checked />
             Rythme
-            <!-- <span class='tooltiptext'>Permet de prendre en compte / ignorer le rythme (la durée) des notes</span> --> </label
-          ><br />
+          </label>
+          <br />
           <label id="transpose-lb" class="tooltip-lb">
             <input id="transpose-cb" type="checkbox" />
             Autoriser les transpositions
-            <!-- <span class='tooltiptext'>Permet d'obtenir les partitions dont la hauteur des notes de la mélodie est décalée</span> --> </label
-          ><br />
+          </label>
+          <br />
           <label id="homothety-lb" class="tooltip-lb">
             <input id="homothety-cb" type="checkbox" />
-            Autoriser les variations de tempo </label
-          ><br />
+            Autoriser les variations de tempo
+          </label>
+          <br />
           <label id="incipit-lb" class="tooltip-lb">
             <input id="incipit-cb" type="checkbox" />
-            Chercher uniquement dans les incipits </label
-          ><br />
+            Chercher uniquement dans les incipits
+          </label>
         </div>
         <div class="fuzzy-options">
           <label class="tooltip-lb" id="pitch-dist-lb">
@@ -118,7 +119,16 @@ const toggleAdvancedOption = () => {
 };
 
 onMounted(() => {
-  authors.loadAuthors();
+  authors.loadAuthors(); 
+  
+  // lock keydown suppr only in fuzzy-options to prevent deletion of notes in melody 
+  document.querySelectorAll('.fuzzy-options input').forEach((input) => {
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Backspace') {
+        event.stopPropagation();
+      }
+    });
+  });
 });
 </script>
 
